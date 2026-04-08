@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailIntel — Central Brain</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:      #FFE01B;
+      --brand-dark: #241C15;
+      --teal:       #007C89;
+      --orange:     #EF5F33;
+      --green:      #00A650;
+      --pink:       #E47386;
+      --obsidian:   #0D0F0F;
+      --surface:    #F7F5F0;
+      --card:       #FFFFFF;
+      --border:     rgba(0,0,0,0.08);
+      --text:       #1A1A1A;
+      --muted:      #6B6860;
+      --mono:       'JetBrains Mono', monospace;
+      --sans:       'DM Sans', sans-serif;
+      --display:    'Syne', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      background: var(--surface);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── ZONE 1: HEADER ── */
+    #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--brand-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .header-left { display: flex; flex-direction: column; gap: 1px; }
+
+    .wordmark {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--brand);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .tagline {
+      font-family: var(--sans);
+      font-weight: 300;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .cost-block {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #cost-counter {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--brand);
+      transition: color 0.3s;
+      min-width: 60px;
+    }
+
+    .live-indicator {
+      display: none;
+      align-items: center;
+      gap: 5px;
+    }
+    .live-indicator.on { display: flex; }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ADE80;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+
+    .live-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #4ADE80;
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .mode-pill {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.07em;
+      padding: 4px 11px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-pill:hover { border-color: var(--brand); color: var(--brand); }
+    .mode-pill.live  { border-color: #4ADE80; color: #4ADE80; }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      position: fixed;
+      top: 56px; bottom: 0; left: 0; right: 0;
+      display: flex;
+    }
+
+    /* ── ZONE 2: TRACE PANEL ── */
+    #trace-panel {
+      width: 30%;
+      min-width: 240px;
+      max-width: 340px;
+      background: var(--obsidian);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,0.04);
+      flex-shrink: 0;
+    }
+
+    .trace-hd {
+      padding: 13px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+
+    .trace-hd-title {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--brand);
+      text-transform: uppercase;
+    }
+
+    #trace-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #trace-log::-webkit-scrollbar { width: 3px; }
+    #trace-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    .trace-line {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.65;
+      color: rgba(74, 222, 128, 0.8);
+      word-break: break-word;
+      opacity: 0;
+      animation: tIn 0.18s ease forwards;
+    }
+
+    @keyframes tIn {
+      from { opacity: 0; transform: translateX(-5px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .trace-sep {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin: 5px 0;
+    }
+
+    /* ── ZONE 3: WORKFLOW FEED ── */
+    #workflow-feed {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    #command-area {
+      padding: 16px 24px 0;
+      flex-shrink: 0;
+    }
+
+    .input-wrap {
+      display: flex;
+      gap: 10px;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      transition: border-color 0.2s;
+    }
+    .input-wrap:focus-within { border-color: var(--brand); }
+
+    #query-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: var(--display);
+      font-size: 15px;
+      color: var(--text);
+      background: transparent;
+      min-width: 0;
+    }
+    #query-input::placeholder { color: var(--muted); font-weight: 400; }
+    #query-input:disabled { opacity: 0.5; }
+
+    #run-btn {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 7px 20px;
+      background: var(--brand);
+      color: var(--brand-dark);
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+    #run-btn:hover    { opacity: 0.87; }
+    #run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    #shopify-creds {
+      display: none;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 12px;
+      background: rgba(0,0,0,0.04);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    #shopify-creds.show { display: flex; }
+    #shopify-creds input {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: var(--card);
+    }
+
+    /* ── STEPPER ── */
+    #stepper {
+      display: none;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 14px 24px 2px;
+    }
+    #stepper.show { display: flex; }
+
+    .s-pill {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 4px 11px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(0,0,0,0.14);
+      color: var(--muted);
+      background: transparent;
+      transition: all 0.25s;
+    }
+    .s-pill.active { animation: sActive 1s ease-in-out infinite; }
+    .s-pill.done   { opacity: 0.85; }
+
+    @keyframes sActive {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.55; }
+    }
+
+    .s-arrow { font-size: 11px; color: var(--muted); }
+
+    /* ── FEED INNER ── */
+    #feed-inner {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 24px 24px;
+    }
+    #feed-inner::-webkit-scrollbar { width: 4px; }
+    #feed-inner::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+
+    #cards-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .n-card {
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-left: 3px solid;
+      padding: 16px 18px;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: cardUp 0.38s ease forwards;
+    }
+
+    @keyframes cardUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .n-card-hd {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .a-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .n-card-body {
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    .n-card-meta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-item {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .meta-item b { color: var(--text); font-weight: 500; }
+
+    .divider-line {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 10px 0;
+    }
+
+    /* ── ZONE 4: CAMPAIGN CARDS (in feed) ── */
+    .campaign-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: cardUp 0.38s ease forwards;
+    }
+
+    .cc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cc-header-left { display: flex; align-items: center; gap: 10px; }
+
+    .cc-title {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .cc-rationale {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .cc-dismiss {
+      font-size: 18px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+      line-height: 1;
+    }
+    .cc-dismiss:hover { background: var(--surface); color: var(--text); }
+
+    /* Platform tabs */
+    .platform-tabs {
+      display: flex;
+      gap: 0;
+      padding: 12px 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ptab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .ptab:hover { color: var(--text); }
+    .ptab.active { color: var(--text); border-bottom-color: var(--brand); }
+    .ptab-icon { font-size: 14px; }
+
+    /* Platform panels */
+    .platform-panels { padding: 16px; }
+
+    .ppanel { display: none; }
+    .ppanel.active { display: block; }
+
+    /* ── EMAIL PREVIEW ── */
+    .email-preview {
+      background: #F8F8F8;
+      border-radius: 10px;
+      border: 1px solid #E5E5E5;
+      overflow: hidden;
+      font-family: var(--sans);
+    }
+
+    .email-chrome {
+      background: #ECECEC;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #D8D8D8;
+    }
+    .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .email-header {
+      background: white;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #EEE;
+    }
+    .email-from {
+      font-size: 11px;
+      color: #999;
+      font-family: var(--mono);
+      margin-bottom: 6px;
+    }
+    .email-subject {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      font-family: var(--display);
+      margin-bottom: 3px;
+    }
+    .email-preview-text {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .email-body {
+      background: white;
+      padding: 16px;
+    }
+    .email-body p {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .email-cta-btn {
+      display: inline-block;
+      background: var(--brand-dark);
+      color: var(--brand);
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 10px 24px;
+      border-radius: 6px;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+    .email-footer {
+      background: #F8F8F8;
+      padding: 10px 16px;
+      border-top: 1px solid #EEE;
+      font-size: 10px;
+      color: #BBB;
+      font-family: var(--mono);
+    }
+    .email-stats {
+      display: flex;
+      gap: 16px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: #FAFAFA;
+    }
+    .email-stat { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .email-stat b { color: var(--text); }
+
+    /* ── INSTAGRAM PREVIEW ── */
+    .ig-preview {
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      max-width: 340px;
+      margin: 0 auto;
+      font-family: var(--sans);
+    }
+
+    .ig-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+    }
+    .ig-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white;
+      font-family: var(--display);
+      flex-shrink: 0;
+    }
+    .ig-username { font-size: 13px; font-weight: 600; color: white; }
+    .ig-time { font-size: 11px; color: #888; margin-top: 1px; }
+    .ig-more { margin-left: auto; color: #888; font-size: 18px; cursor: pointer; }
+
+    .ig-image {
+      width: 100%;
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .ig-image-placeholder {
+      font-size: 36px;
+      opacity: 0.4;
+    }
+    .ig-image-label {
+      position: absolute;
+      bottom: 10px; right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.06em;
+    }
+
+    .ig-actions {
+      display: flex;
+      gap: 14px;
+      padding: 10px 12px 6px;
+    }
+    .ig-action-icon { font-size: 22px; cursor: pointer; color: white; }
+    .ig-save { margin-left: auto; }
+
+    .ig-caption {
+      padding: 0 12px 12px;
+      font-size: 13px;
+      color: white;
+      line-height: 1.55;
+    }
+    .ig-caption .ig-handle { font-weight: 700; margin-right: 6px; }
+    .ig-hashtags { color: #4A9EFF; margin-top: 4px; font-size: 12px; }
+    .ig-best-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #666;
+      padding: 6px 12px 10px;
+      border-top: 1px solid #1A1A1A;
+    }
+
+    /* ── TIKTOK PREVIEW ── */
+    .tt-preview {
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      max-width: 280px;
+      margin: 0 auto;
+      position: relative;
+      font-family: var(--sans);
+    }
+
+    .tt-video {
+      width: 100%;
+      aspect-ratio: 9/16;
+      max-height: 380px;
+      background: linear-gradient(160deg, #0a0a0a 0%, #1a0a2e 30%, #2d1b69 60%, #11998e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tt-bg-text {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.06);
+      text-align: center;
+      padding: 20px;
+      line-height: 1.2;
+    }
+
+    .tt-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 12px 12px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    }
+
+    .tt-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .tt-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--brand);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--brand-dark);
+      font-family: var(--display);
+    }
+    .tt-handle { font-size: 12px; font-weight: 700; color: white; }
+
+    .tt-hook {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.35;
+      margin-bottom: 6px;
+      font-family: var(--display);
+    }
+
+    .tt-script {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .tt-hashtags { font-size: 12px; color: #69C9D0; }
+
+    .tt-sidebar {
+      position: absolute;
+      right: 10px;
+      bottom: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .tt-side-btn { font-size: 24px; cursor: pointer; text-align: center; }
+    .tt-side-lbl { font-size: 10px; color: white; text-align: center; margin-top: -12px; }
+
+    .tt-best-time {
+      background: #0A0A0A;
+      padding: 8px 12px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #666;
+      border-top: 1px solid #1A1A1A;
+    }
+
+    /* ── EDIT BAR ── */
+    .edit-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: #FAFAFA;
+    }
+
+    .btn-edit {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      color: var(--text);
+      letter-spacing: 0.03em;
+      transition: all 0.15s;
+    }
+    .btn-edit:hover { border-color: var(--brand); background: #FFFDF0; }
+    .btn-edit.editing { background: var(--brand); color: var(--brand-dark); border-color: var(--brand); }
+
+    .btn-launch {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 22px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-launch:hover    { opacity: 0.88; }
+    .btn-launch:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-launch.done     { background: var(--green); }
+
+    /* Edit textareas */
+    .edit-field {
+      display: none;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 12px;
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.6;
+      border: 1.5px solid var(--brand);
+      border-radius: 8px;
+      resize: vertical;
+      outline: none;
+      min-height: 80px;
+      background: #FFFDF5;
+    }
+    .edit-field.show { display: block; }
+
+    /* compact action-rail removed — campaigns now inline in feed */
+    #action-rail { display: none; }
+
+    /* ── CRITIC SCORE BADGE ── */
+    .critic-score-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      background: #F8F8F6;
+      border-bottom: 1px solid var(--border);
+    }
+    .cs-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .cs-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(0,0,0,0.07);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .cs-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+    .cs-num {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      min-width: 28px;
+      text-align: right;
+    }
+    .cs-verdict {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── AUDIENCE SELECTOR ── */
+    .audience-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0 6px;
+      flex-wrap: wrap;
+    }
+    .audience-lbl {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .aud-chip {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .aud-chip:hover { border-color: var(--brand); color: var(--text); }
+    .aud-chip.active { background: var(--brand); color: var(--brand-dark); border-color: var(--brand); font-weight: 500; }
+
+    /* ── CHAR COUNTER ── */
+    .char-counter-wrap { position: relative; }
+    .char-counter {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .char-counter.warn  { color: #F59E0B; }
+    .char-counter.over  { color: #EF4444; }
+
+    /* ── SCHEDULE TOGGLE ── */
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: #FAFAFA;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sched-lbl {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .sched-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .sched-opt {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 5px 12px;
+      background: white;
+      color: var(--muted);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+      border-right: 1px solid var(--border);
+    }
+    .sched-opt:last-child { border-right: none; }
+    .sched-opt.active { background: var(--brand-dark); color: var(--brand); }
+    .sched-time-input {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: white;
+      color: var(--text);
+      display: none;
+    }
+    .sched-time-input.show { display: block; }
+
+    /* ── A/B VARIANT ── */
+    .ab-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0 10px;
+    }
+    .ab-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .btn-ab {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 5px 12px;
+      border: 1.5px dashed rgba(0,124,137,0.4);
+      border-radius: 6px;
+      background: rgba(0,124,137,0.04);
+      color: var(--teal);
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-ab:hover { border-color: var(--teal); background: rgba(0,124,137,0.08); }
+    .btn-ab:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ab-spinner { animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .variant-strip {
+      display: none;
+      background: rgba(0,124,137,0.05);
+      border: 1px solid rgba(0,124,137,0.15);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .variant-strip.show { display: block; }
+    .variant-strip-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 6px;
+    }
+    .btn-use-variant {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 5px 12px;
+      border: 1px solid var(--teal);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--teal);
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.15s;
+    }
+    .btn-use-variant:hover { background: var(--teal); color: white; }
+
+    /* ── API KEY OVERLAY ── */
+    #api-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13,15,15,0.9);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .api-modal {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 30px 32px;
+      width: 380px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+
+    .modal-mark {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--brand-dark);
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .modal-sub {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .key-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    #api-key-input {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    #api-key-input:focus { border-color: var(--brand); }
+    #api-key-input.err   { border-color: #EF4444; }
+
+    #api-go {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 22px;
+      background: var(--brand);
+      color: var(--brand-dark);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #api-go:hover { opacity: 0.88; }
+
+    .key-note {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── ERROR CARD ── */
+    .err-card {
+      background: #FFF5F5;
+      border: 1px solid #FECACA;
+      border-left: 3px solid #EF4444;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-family: var(--sans);
+      font-size: 14px;
+      color: #991B1B;
+    }
+
+    /* ── WELCOME STATE ── */
+    #welcome-state { display: flex; flex-direction: column; gap: 14px; }
+
+    .welcome-hero {
+      background: var(--brand-dark);
+      border-radius: 12px;
+      padding: 20px 22px;
+      color: white;
+    }
+    .welcome-hero h2 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--brand);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .welcome-hero p {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .how-it-works {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .step-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 20px;
+      padding: 5px 12px 5px 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .step-chip-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .store-card {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .store-card-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .store-name {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .store-period {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .store-mock-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      background: #FFF8D6;
+      color: #92700A;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .store-metrics {
+      display: flex;
+      padding: 12px 16px;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .store-metric {
+      flex: 1;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      padding: 4px 8px;
+    }
+    .store-metric:last-child { border-right: none; }
+    .metric-val {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .metric-lbl {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .metric-delta {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      font-weight: 500;
+    }
+    .store-products {
+      padding: 10px 16px 12px;
+    }
+    .store-products-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .product-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+    .product-row:last-child { border-bottom: none; }
+    .product-name {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 500;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-trend {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .trend-rising   { background: #DCFCE7; color: #166534; }
+    .trend-declining{ background: #FEE2E2; color: #991B1B; }
+    .trend-stable   { background: #F1F5F9; color: #475569; }
+
+    .alert-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #FFFBEB;
+      border-top: 1px solid #FDE68A;
+    }
+    .alert-dot { width: 6px; height: 6px; border-radius: 50%; background: #F59E0B; flex-shrink: 0; }
+    .alert-text {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: #92400E;
+    }
+
+    .demo-cta {
+      background: var(--brand);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+    .demo-cta:hover { opacity: 0.9; }
+    .demo-cta-text {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--brand-dark);
+    }
+    .demo-cta-sub {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: rgba(36,28,21,0.6);
+      margin-top: 2px;
+      letter-spacing: 0.03em;
+    }
+    .demo-cta-arrow {
+      font-size: 20px;
+      color: var(--brand-dark);
+      flex-shrink: 0;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 680px) {
+      #trace-panel { display: none; }
+      #workflow-feed { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- API Key Overlay -->
+  <div id="api-overlay">
+    <div class="api-modal">
+      <div class="modal-mark">MailIntel</div>
+      <div class="modal-sub">Enter your Anthropic API key to begin.</div>
+      <div class="key-row">
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+        <button id="api-go" onclick="saveKey()">Go</button>
+      </div>
+      <div class="key-note">Key stored in session only. Never saved to disk.</div>
+    </div>
+  </div>
+
+  <!-- Zone 1: Header -->
+  <header id="header">
+    <div class="header-left">
+      <div class="wordmark">MailIntel</div>
+      <div class="tagline">Central Brain</div>
+    </div>
+    <div class="header-right">
+      <div class="cost-block">
+        <span id="cost-counter">$0.0000</span>
+        <div class="live-indicator" id="live-ind">
+          <div class="live-dot"></div>
+          <span class="live-label">LIVE</span>
+        </div>
+      </div>
+      <button class="mode-pill" id="mode-btn" onclick="toggleMode()">MOCK DATA</button>
+    </div>
+  </header>
+
+  <!-- Main: Trace + Feed -->
+  <div id="main">
+
+    <!-- Zone 2: Trace Panel -->
+    <div id="trace-panel">
+      <div class="trace-hd">
+        <div class="trace-hd-title">Intelligence Trace</div>
+      </div>
+      <div id="trace-log"></div>
+    </div>
+
+    <!-- Zone 3: Workflow Feed -->
+    <div id="workflow-feed">
+
+      <div id="command-area">
+        <div class="input-wrap">
+          <input type="text" id="query-input"
+            value="Give me a business health check and growth strategy for this week."
+            onkeydown="if(event.key==='Enter' && !this.disabled) runQuery()">
+          <button id="run-btn" onclick="runQuery()">Run</button>
+        </div>
+        <div id="shopify-creds">
+          <input type="text"     id="s-domain" placeholder="your-store.myshopify.com">
+          <input type="password" id="s-token"  placeholder="Shopify Admin API token">
+        </div>
+      </div>
+
+      <div id="stepper"></div>
+
+      <div id="feed-inner">
+        <div id="welcome-state">
+
+          <div class="welcome-hero">
+            <h2>Your commerce intelligence, in one loop.</h2>
+            <p>MailIntel runs 5 AI agents in sequence — it reads your Shopify signals, finds what's winning and what's stalling, then writes ready-to-approve campaigns. One question. Two actions. Done in 90 seconds.</p>
+            <div class="how-it-works">
+              <div class="step-chip"><div class="step-chip-dot" style="background:#FFE01B"></div>Orchestrator plans</div>
+              <div class="step-chip"><div class="step-chip-dot" style="background:#007C89"></div>Analyst reads signals</div>
+              <div class="step-chip"><div class="step-chip-dot" style="background:#EF5F33"></div>Strategist picks actions</div>
+              <div class="step-chip"><div class="step-chip-dot" style="background:#00A650"></div>Activation writes copy</div>
+              <div class="step-chip"><div class="step-chip-dot" style="background:#E47386"></div>Critic approves</div>
+            </div>
+          </div>
+
+          <div class="store-card" id="store-preview"></div>
+
+          <button class="demo-cta" onclick="runDemo()">
+            <div>
+              <div class="demo-cta-text">Run the demo query →</div>
+              <div class="demo-cta-sub">"Give me a business health check and growth strategy for this week."</div>
+            </div>
+            <span class="demo-cta-arrow">⚡</span>
+          </button>
+
+        </div>
+        <div id="cards-feed" style="display:none; flex-direction:column; gap:14px;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- action-rail removed — campaigns render inline in the feed -->
+
+  <script>
+  // ─────────────────────────────────────────────────────────────────
+  // CONSTANTS
+  // ─────────────────────────────────────────────────────────────────
+
+  const AGENT_THEMES = {
+    ORCHESTRATOR: { name: 'Orchestrator',   color: '#FFE01B', text: '#241C15' },
+    ANALYST:      { name: 'Signal Analyst', color: '#007C89', text: '#FFFFFF' },
+    STRATEGY:     { name: 'Strategist',     color: '#EF5F33', text: '#FFFFFF' },
+    COPY:         { name: 'Activation',     color: '#00A650', text: '#FFFFFF' },
+    CRITIC:       { name: 'Critic',         color: '#E47386', text: '#FFFFFF' },
+  };
+
+  const STEPPER_ORDER = ['ORCHESTRATOR', 'ANALYST', 'STRATEGY', 'COPY', 'CRITIC'];
+
+  const MOCK_SHOPIFY_DATA = {
+    store_name: 'Verdant Supply Co.',
+    period: 'Last 7 days',
+    currency: 'USD',
+    summary: {
+      total_revenue: 4820,
+      orders: 67,
+      avg_order_value: 71.94,
+      revenue_change_pct: 12.4
+    },
+    top_products: [
+      {
+        id: 'prod_001',
+        title: 'Canvas Tote — Natural',
+        sku: 'CT-NAT-001',
+        units_sold: 43,
+        revenue: 1548,
+        inventory: 12,
+        trend: 'rising',
+        change_pct: 34.2,
+        insight: 'High velocity, low stock — reorder risk within 4 days'
+      },
+      {
+        id: 'prod_002',
+        title: 'Eco-Pins Bundle (5pk)',
+        sku: 'EP-BND-005',
+        units_sold: 8,
+        revenue: 216,
+        inventory: 340,
+        trend: 'declining',
+        change_pct: -18.5,
+        insight: 'High stock, slowing sales — strong upsell candidate with tote purchases'
+      },
+      {
+        id: 'prod_003',
+        title: 'Beeswax Wrap Set',
+        sku: 'BW-SET-003',
+        units_sold: 16,
+        revenue: 528,
+        inventory: 89,
+        trend: 'stable',
+        change_pct: 2.1,
+        insight: 'Steady performer — seasonal opportunity in summer picnic category'
+      }
+    ],
+    alerts: [
+      { type: 'reorder',     product: 'Canvas Tote — Natural', urgency: 'high'   },
+      { type: 'opportunity', product: 'Eco-Pins Bundle',        urgency: 'medium' }
+    ],
+    customer_segments: {
+      repeat_buyers: 142,
+      lapsed_30d: 89,
+      new_this_week: 23
+    }
+  };
+
+  const AGENT_PROMPTS = {
+    ORCHESTRATOR: `You are the Orchestrator for MailIntel, the Central Brain for SMB commerce intelligence.
+Parse the user query and decide what the Signal Analyst should prioritise.
+
+Output only valid JSON — no preamble, no markdown:
+{
+  "focus": "what to analyse",
+  "priority": "win | opportunity | both",
+  "context": "any relevant framing for the analyst"
+}
+
+Rules:
+- Never reference Mailchimp
+- Never say "based on your data"
+- Output only valid JSON`,
+
+    ANALYST: `You are the Signal Analyst for MailIntel.
+You receive Shopify commerce data and identify one Win and one Opportunity.
+
+Output only valid JSON:
+{
+  "win": {
+    "product": "product name",
+    "metric": "what is up and by how much",
+    "insight": "plain English, max 2 sentences"
+  },
+  "opportunity": {
+    "product": "product name",
+    "metric": "what is lagging",
+    "insight": "plain English, max 2 sentences",
+    "upsell_angle": "how it connects to the win product"
+  },
+  "confidence": "High | Medium | Low",
+  "signals_checked": 3
+}
+
+Rules:
+- Never say "your data" or "your customers" — say "we've identified" or "there's a pattern"
+- Confidence is High only if 2+ data points corroborate
+- Output only valid JSON`,
+
+    STRATEGY: `You are the Strategist for MailIntel.
+You receive win and opportunity signals and propose two Next Best Actions.
+
+Output only valid JSON:
+{
+  "actions": [
+    {
+      "id": "action_1",
+      "type": "email",
+      "trigger": "which signal drives this",
+      "rationale": "why now — max 1 sentence",
+      "external_trend": "relevant seasonal or search trend",
+      "urgency": "high | medium"
+    },
+    {
+      "id": "action_2",
+      "type": "social",
+      "trigger": "which signal drives this",
+      "rationale": "why now — max 1 sentence",
+      "external_trend": "relevant seasonal or search trend",
+      "urgency": "high | medium"
+    }
+  ]
+}
+
+Rules:
+- Never say "Mailchimp" — say "email campaign"
+- Write as a trusted advisor to a busy shop owner
+- Output only valid JSON`,
+
+    COPY: `You are the Activation agent for MailIntel.
+You write ready-to-send content for Email, Instagram, and TikTok based on a strategy action.
+
+Always output all three formats in a single valid JSON object:
+{
+  "email": {
+    "subject": "subject line, max 8 words",
+    "preview_text": "preview text, max 12 words",
+    "body": "3 short punchy paragraphs separated by newlines, conversational tone, ends with one CTA sentence",
+    "cta": "CTA button text, max 4 words",
+    "estimated_audience": 340,
+    "estimated_open_rate": "28%"
+  },
+  "instagram": {
+    "caption": "engaging caption, max 150 chars",
+    "hashtags": "#tag1 #tag2 #tag3",
+    "hook": "first 5 words that stop the scroll",
+    "best_time": "Today 6pm"
+  },
+  "tiktok": {
+    "hook": "bold opening line, max 8 words",
+    "script": "2-3 sentence video script, fast-paced and visual",
+    "hashtags": "#tag1 #tag2 #tag3",
+    "best_time": "Today 7pm"
+  }
+}
+
+Rules:
+- Voice: warm, direct, human — never corporate or salesy
+- Never use "blast", "newsletter", "synergy"
+- Never say "based on your data"
+- Output only valid JSON`,
+
+    CRITIC: `You are the Critic for MailIntel.
+You review Activation output before it shows to the user.
+
+Check for:
+1. Tone violations — corporate, spammy, or jargon-heavy language
+2. Naming violations — any use of "based on your data", "your customers"
+3. Accuracy — does the copy match the signal that triggered it?
+4. Concierge quality — does it sound like a trusted advisor?
+
+Output only valid JSON:
+{
+  "approved": true,
+  "score": 8,
+  "issues": [],
+  "revised_copy": null
+}
+
+Or if issues found:
+{
+  "approved": false,
+  "score": 5,
+  "issues": ["uses corporate jargon in paragraph 2"],
+  "revised_copy": { }
+}
+
+If score >= 7 and no naming violations, set approved to true.
+Output only valid JSON.`
+  };
+
+  const COST_PER_M = { input: 3.00, output: 15.00 };
+  const AUDIENCE_SEGMENTS = {
+    all:     { label: 'All contacts',     count: 142 + 89 + 23 },
+    repeat:  { label: 'Repeat buyers',    count: 142 },
+    lapsed:  { label: 'Lapsed 30d',       count: 89  },
+    new:     { label: 'New this week',    count: 23  },
+  };
+  const CHAR_LIMITS = { email: 2000, ig: 2200, tt: 2200 };
+
+  // ─────────────────────────────────────────────────────────────────
+  // STATE
+  // ─────────────────────────────────────────────────────────────────
+
+  let sessionCost     = 0;
+  let dataMode        = 'mock';
+  let actionSeq       = 0;
+  let pendingCount    = 0;
+  let traceDelayMs    = 0;
+  const _copyStore    = {};
+  const _criticScores = {};
+
+  // ─────────────────────────────────────────────────────────────────
+  // API KEY
+  // ─────────────────────────────────────────────────────────────────
+
+  function checkKey() {
+    if (sessionStorage.getItem('mi_api_key')) {
+      document.getElementById('api-overlay').style.display = 'none';
+    }
+  }
+
+  function saveKey() {
+    const inp = document.getElementById('api-key-input');
+    const val = inp.value.trim();
+    if (!val) { inp.classList.add('err'); return; }
+    inp.classList.remove('err');
+    sessionStorage.setItem('mi_api_key', val);
+    document.getElementById('api-overlay').style.display = 'none';
+  }
+
+  document.getElementById('api-key-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveKey();
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // DATA MODE
+  // ─────────────────────────────────────────────────────────────────
+
+  function toggleMode() {
+    dataMode = dataMode === 'mock' ? 'live' : 'mock';
+    const btn    = document.getElementById('mode-btn');
+    const creds  = document.getElementById('shopify-creds');
+    if (dataMode === 'live') {
+      btn.textContent = 'LIVE SHOPIFY';
+      btn.classList.add('live');
+      creds.classList.add('show');
+    } else {
+      btn.textContent = 'MOCK DATA';
+      btn.classList.remove('live');
+      creds.classList.remove('show');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // COST
+  // ─────────────────────────────────────────────────────────────────
+
+  function updateCost(inT, outT) {
+    sessionCost += (inT / 1_000_000 * COST_PER_M.input) + (outT / 1_000_000 * COST_PER_M.output);
+    const el = document.getElementById('cost-counter');
+    el.textContent = `$${sessionCost.toFixed(4)}`;
+    el.style.color = sessionCost > 0.50 ? '#FF4444'
+                   : sessionCost > 0.10 ? '#FF9900'
+                   : '#FFE01B';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // TRACE PANEL
+  // ─────────────────────────────────────────────────────────────────
+
+  function addTrace(agentKey, dir, text) {
+    const log   = document.getElementById('trace-log');
+    const theme = AGENT_THEMES[agentKey];
+    const line  = document.createElement('div');
+    line.className = 'trace-line';
+    line.style.animationDelay = `${traceDelayMs}ms`;
+    traceDelayMs = Math.min(traceDelayMs + 30, 250);
+    const truncated = text.length > 120 ? text.slice(0, 120) + '…' : text;
+    line.innerHTML = `<span style="color:${theme.color};font-weight:500">[${esc(theme.name)}]</span> <span style="opacity:0.45">${dir}</span> ${esc(truncated)}`;
+    log.appendChild(line);
+    requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
+  }
+
+  function addTraceSep() {
+    const log = document.getElementById('trace-log');
+    const hr  = document.createElement('hr');
+    hr.className = 'trace-sep';
+    log.appendChild(hr);
+  }
+
+  function clearTrace() {
+    document.getElementById('trace-log').innerHTML = '';
+    traceDelayMs = 0;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // STEPPER
+  // ─────────────────────────────────────────────────────────────────
+
+  function initStepper() {
+    const el = document.getElementById('stepper');
+    el.innerHTML = '';
+    el.classList.add('show');
+    STEPPER_ORDER.forEach((key, i) => {
+      if (i > 0) {
+        const a = document.createElement('span');
+        a.className = 's-arrow';
+        a.textContent = '→';
+        el.appendChild(a);
+      }
+      const p = document.createElement('div');
+      p.className = 's-pill pending';
+      p.id = `sp-${key}`;
+      p.textContent = AGENT_THEMES[key].name;
+      el.appendChild(p);
+    });
+  }
+
+  function stepState(key, state) {
+    const p = document.getElementById(`sp-${key}`);
+    if (!p) return;
+    const t = AGENT_THEMES[key];
+    p.className = `s-pill ${state}`;
+    if (state === 'active' || state === 'done') {
+      p.style.background   = t.color;
+      p.style.color        = t.text;
+      p.style.borderColor  = t.color;
+    }
+    if (state === 'done') {
+      p.textContent = `✓ ${t.name}`;
+    }
+    if (state === 'pending') {
+      p.style.background   = '';
+      p.style.color        = '';
+      p.style.borderColor  = '';
+      p.textContent = t.name;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // NARRATIVE CARDS
+  // ─────────────────────────────────────────────────────────────────
+
+  function renderCard(agentKey, data) {
+    const feed  = document.getElementById('cards-feed');
+    feed.style.display = 'flex';
+    const theme = AGENT_THEMES[agentKey];
+    const card  = document.createElement('div');
+    card.className = 'n-card';
+    card.style.borderLeftColor = theme.color;
+
+    const badge = `<span class="a-badge" style="background:${theme.color};color:${theme.text}">${esc(theme.name)}</span>`;
+
+    if (agentKey === 'ANALYST') {
+      const win = data.win || {};
+      const opp = data.opportunity || {};
+      card.innerHTML = `
+        <div class="n-card-hd">${badge}</div>
+        <div class="n-card-body">
+          <strong>Win detected:</strong> ${esc(win.insight || '')}
+          <hr class="divider-line">
+          <strong>Growth opportunity:</strong> ${esc(opp.insight || '')}
+          ${opp.upsell_angle ? `<br><span style="font-size:12px;color:var(--muted);font-style:italic;display:block;margin-top:4px">${esc(opp.upsell_angle)}</span>` : ''}
+        </div>
+        <div class="n-card-meta">
+          <span class="meta-item">Confidence: <b>${esc(data.confidence || 'High')}</b></span>
+          <span class="meta-item">Signals cross-checked: <b>${data.signals_checked || 3}</b></span>
+        </div>`;
+    } else if (agentKey === 'STRATEGY') {
+      const actions = data.actions || [];
+      card.innerHTML = `
+        <div class="n-card-hd">${badge}</div>
+        <div class="n-card-body">
+          ${actions.map((a, i) => `
+            <div ${i < actions.length - 1 ? 'style="margin-bottom:12px"' : ''}>
+              <strong>${a.type === 'email' ? '✉ Email Campaign' : '📸 Social Post'}</strong>
+              ${a.urgency === 'high' ? `<span style="font-size:10px;font-family:var(--mono);color:#EF4444;margin-left:6px;letter-spacing:0.04em">URGENT</span>` : ''}
+              <br>
+              <span style="font-size:13px;color:var(--muted)">${esc(a.rationale || '')}</span>
+              ${a.external_trend ? `<br><span style="font-size:11px;color:var(--muted);font-style:italic">Trend signal: ${esc(a.external_trend)}</span>` : ''}
+            </div>
+            ${i < actions.length - 1 ? '<hr class="divider-line">' : ''}
+          `).join('')}
+        </div>`;
+    }
+
+    feed.appendChild(card);
+    setTimeout(() => { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+  }
+
+  function clearFeed() {
+    const cf = document.getElementById('cards-feed');
+    cf.innerHTML = '';
+    cf.style.display = 'none';
+    const ws = document.getElementById('welcome-state');
+    if (ws) ws.style.display = 'none';
+  }
+
+  function renderStorePreview() {
+    const d = MOCK_SHOPIFY_DATA;
+    const trendClass = t => t === 'rising' ? 'trend-rising' : t === 'declining' ? 'trend-declining' : 'trend-stable';
+    const trendLabel = t => t === 'rising' ? `↑ ${d.top_products.find(p=>p.trend===t)?.change_pct||''}%` : t === 'declining' ? `↓ ${Math.abs(d.top_products.find(p=>p.trend===t)?.change_pct||0)}%` : 'Stable';
+
+    document.getElementById('store-preview').innerHTML = `
+      <div class="store-card-hd">
+        <div>
+          <div class="store-name">${esc(d.store_name)}</div>
+          <div class="store-period">${esc(d.period)}</div>
+        </div>
+        <span class="store-mock-badge">MOCK DATA</span>
+      </div>
+      <div class="store-metrics">
+        <div class="store-metric">
+          <div class="metric-val">$${d.summary.total_revenue.toLocaleString()}</div>
+          <div class="metric-lbl">Revenue</div>
+          <div class="metric-delta">+${d.summary.revenue_change_pct}%</div>
+        </div>
+        <div class="store-metric">
+          <div class="metric-val">${d.summary.orders}</div>
+          <div class="metric-lbl">Orders</div>
+        </div>
+        <div class="store-metric">
+          <div class="metric-val">$${d.summary.avg_order_value}</div>
+          <div class="metric-lbl">Avg. Order</div>
+        </div>
+        <div class="store-metric">
+          <div class="metric-val">${d.customer_segments.repeat_buyers}</div>
+          <div class="metric-lbl">Repeat buyers</div>
+        </div>
+      </div>
+      <div class="store-products">
+        <div class="store-products-lbl">Top Products</div>
+        ${d.top_products.map(p => `
+          <div class="product-row">
+            <span class="product-name">${esc(p.title)}</span>
+            <span class="product-trend ${trendClass(p.trend)}">${p.trend === 'rising' ? '↑' : p.trend === 'declining' ? '↓' : '→'} ${p.change_pct > 0 ? '+' : ''}${p.change_pct}%</span>
+          </div>`).join('')}
+      </div>
+      ${d.alerts.map(a => `
+        <div class="alert-row">
+          <div class="alert-dot"></div>
+          <span class="alert-text"><strong>${esc(a.urgency === 'high' ? '⚠ High urgency' : 'Opportunity')}:</strong> ${esc(a.product)}</span>
+        </div>`).join('')}`;
+  }
+
+  function runDemo() {
+    const q = 'Give me a business health check and growth strategy for this week.';
+    document.getElementById('query-input').value = q;
+    runAgentLoop(q);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAMPAIGN CARDS
+  // ─────────────────────────────────────────────────────────────────
+
+  function addAction(copyData, action, criticScore) {
+    actionSeq++;
+    const id   = `a${actionSeq}`;
+    const feed = document.getElementById('cards-feed');
+    feed.style.display = 'flex';
+
+    // Normalize to multi-platform format
+    let cd = copyData;
+    if (!cd.email && !cd.instagram && !cd.tiktok) {
+      if (cd.type === 'email') {
+        cd = { email: cd, instagram: { caption:'', hashtags:'', hook:'', best_time:'Today 6pm' }, tiktok:{ hook:'', script:'', hashtags:'', best_time:'Today 7pm' } };
+      } else {
+        cd = { email:{ subject:'', preview_text:'', body:'', cta:'Shop Now', estimated_audience:340, estimated_open_rate:'28%' }, instagram: cd, tiktok:{ hook:'', script:'', hashtags:'', best_time:'Today 7pm' } };
+      }
+    }
+    _copyStore[id] = cd;
+    _criticScores[id] = criticScore || 8;
+
+    const title     = action?.type === 'email' ? 'Email Campaign' : 'Campaign';
+    const rationale = esc(action?.rationale || '');
+    const storeInitials = (MOCK_SHOPIFY_DATA.store_name||'VS').split(' ').map(w=>w[0]).join('').slice(0,2);
+    const score     = _criticScores[id];
+    const scoreColor = score >= 8 ? '#00A650' : score >= 6 ? '#F59E0B' : '#EF4444';
+    const scoreVerdict = score >= 8 ? '✓ APPROVED' : score >= 6 ? '~ REVISED' : '✗ FLAGGED';
+    const scoreVerdictBg = score >= 8 ? '#DCFCE7' : score >= 6 ? '#FEF3C7' : '#FEE2E2';
+    const scoreVerdictColor = score >= 8 ? '#166534' : score >= 6 ? '#92400E' : '#991B1B';
+
+    const emailHtml = buildEmailPreview(id, cd.email || {}, storeInitials);
+    const igHtml    = buildIgPreview(id, cd.instagram || {}, storeInitials);
+    const ttHtml    = buildTtPreview(id, cd.tiktok || {}, storeInitials);
+
+    const div = document.createElement('div');
+    div.className = 'campaign-card';
+    div.setAttribute('data-action', id);
+    div.innerHTML = `
+      <div class="cc-header">
+        <div class="cc-header-left">
+          <span class="a-badge" style="background:${AGENT_THEMES.COPY.color};color:${AGENT_THEMES.COPY.text}">⚡ CAMPAIGN</span>
+          <div>
+            <div class="cc-title">${title}</div>
+            ${rationale ? `<div class="cc-rationale">${rationale}</div>` : ''}
+          </div>
+        </div>
+        <button class="cc-dismiss" onclick="dismissAction('${id}')" title="Dismiss">✕</button>
+      </div>
+
+      <div class="critic-score-bar">
+        <span class="cs-label">CRITIC SCORE</span>
+        <div class="cs-track"><div class="cs-fill" style="width:${score*10}%;background:${scoreColor}"></div></div>
+        <span class="cs-num" style="color:${scoreColor}">${score}/10</span>
+        <span class="cs-verdict" style="background:${scoreVerdictBg};color:${scoreVerdictColor}">${scoreVerdict}</span>
+      </div>
+
+      <div class="platform-tabs" id="tabs-${id}">
+        <button class="ptab active" onclick="switchTab('${id}','email',this)"><span class="ptab-icon">✉</span> Email</button>
+        <button class="ptab"        onclick="switchTab('${id}','ig',this)"><span class="ptab-icon">📸</span> Instagram</button>
+        <button class="ptab"        onclick="switchTab('${id}','tt',this)"><span class="ptab-icon">🎵</span> TikTok</button>
+      </div>
+
+      <div class="platform-panels" id="panels-${id}">
+        <div class="ppanel active" id="ppanel-${id}-email">${emailHtml}</div>
+        <div class="ppanel"        id="ppanel-${id}-ig">${igHtml}</div>
+        <div class="ppanel"        id="ppanel-${id}-tt">${ttHtml}</div>
+      </div>
+
+      <div class="schedule-row" id="sched-row-${id}">
+        <span class="sched-lbl">SEND:</span>
+        <div class="sched-toggle">
+          <button class="sched-opt active" onclick="setSchedule('${id}','now',this)">Now</button>
+          <button class="sched-opt"        onclick="setSchedule('${id}','best',this)">Best time ✨</button>
+          <button class="sched-opt"        onclick="setSchedule('${id}','custom',this)">Custom</button>
+        </div>
+        <input type="datetime-local" class="sched-time-input" id="sched-input-${id}">
+        <span id="sched-note-${id}" style="font-family:var(--mono);font-size:10px;color:var(--teal)"></span>
+      </div>
+
+      <div class="edit-bar">
+        <button class="btn-edit" id="edit-btn-${id}" onclick="toggleEdit('${id}')">✏ Edit copy</button>
+        <button class="btn-ab"   id="ab-btn-${id}"   onclick="genVariant('${id}')">⚡ A/B variant</button>
+        <button class="btn-launch" id="launch-btn-${id}" onclick="handleLaunch('${id}')">
+          <span>🚀</span> Launch campaign
+        </button>
+      </div>`;
+
+    feed.appendChild(div);
+    setTimeout(() => div.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
+  }
+
+  function buildEmailPreview(id, e, initials) {
+    const paragraphs = (e.body || 'Your campaign copy will appear here.').split('\n').filter(Boolean);
+    const aud = AUDIENCE_SEGMENTS;
+    const estOpen = e.estimated_open_rate || '28%';
+    const audChips = Object.entries(aud).map(([k,v]) =>
+      `<span class="aud-chip ${k==='all'?'active':''}" onclick="setAudience('${id}','${k}',this)" data-count="${v.count}">${v.label} (${v.count})</span>`
+    ).join('');
+
+    return `
+      <div class="audience-row">
+        <span class="audience-lbl">AUDIENCE:</span>${audChips}
+      </div>
+      <div class="email-preview">
+        <div class="email-chrome">
+          <div class="chrome-dot" style="background:#FF5F57"></div>
+          <div class="chrome-dot" style="background:#FFBD2E"></div>
+          <div class="chrome-dot" style="background:#28C840"></div>
+        </div>
+        <div class="email-header">
+          <div class="email-from">From: ${esc(MOCK_SHOPIFY_DATA.store_name)} &lt;hello@verdantsupply.co&gt;</div>
+          <div class="email-subject" id="email-subj-${id}">${esc(e.subject || 'Subject line')}</div>
+          <div class="email-preview-text">${esc(e.preview_text || '')}</div>
+        </div>
+        <div class="email-body" id="email-body-disp-${id}">
+          ${paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}
+          <div class="email-cta-btn">${esc(e.cta || 'Shop Now')}</div>
+        </div>
+        <div class="email-footer">Verdant Supply Co. · Unsubscribe</div>
+      </div>
+      <div class="email-stats">
+        <span class="email-stat">Audience: <b id="aud-count-${id}">${aud.all.count} contacts</b></span>
+        <span class="email-stat">Est. opens: <b>${estOpen}</b></span>
+        <span class="email-stat">Est. revenue: <b id="est-rev-${id}">$${Math.round(aud.all.count * parseFloat(estOpen)/100 * 71.94)}</b></span>
+      </div>
+      <div class="char-counter-wrap">
+        <textarea class="edit-field" id="edit-email-${id}"
+          oninput="updateCharCount('email-cc-${id}',this.value.length,${CHAR_LIMITS.email})"
+          placeholder="Edit email body...">${esc(e.body || '')}</textarea>
+        <span class="char-counter" id="email-cc-${id}">${(e.body||'').length}/${CHAR_LIMITS.email}</span>
+      </div>
+      <div class="variant-strip" id="var-email-${id}">
+        <div class="variant-strip-lbl">A/B VARIANT — SUBJECT LINE</div>
+        <div id="var-email-text-${id}"></div>
+        <button class="btn-use-variant" onclick="useVariant('${id}','email')">Use this variant</button>
+      </div>
+      <div class="ab-row" style="display:none" id="ab-email-row-${id}"></div>`;
+  }
+
+  function buildIgPreview(id, ig, initials) {
+    const caption  = ig.caption  || '';
+    const hashtags = ig.hashtags || '';
+    const bestTime = ig.best_time || 'Today 6pm';
+    const handle   = MOCK_SHOPIFY_DATA.store_name.toLowerCase().replace(/\s/g,'');
+    return `
+      <div class="ig-preview">
+        <div class="ig-header">
+          <div class="ig-avatar">${initials}</div>
+          <div><div class="ig-username">${esc(handle)}</div><div class="ig-time">now · Sponsored</div></div>
+          <span class="ig-more">···</span>
+        </div>
+        <div class="ig-image">
+          <span class="ig-image-placeholder">🌿</span>
+          <span class="ig-image-label">YOUR PRODUCT PHOTO</span>
+        </div>
+        <div class="ig-actions">
+          <span class="ig-action-icon">🤍</span>
+          <span class="ig-action-icon">💬</span>
+          <span class="ig-action-icon">↗</span>
+          <span class="ig-action-icon ig-save">🔖</span>
+        </div>
+        <div class="ig-caption" id="ig-caption-disp-${id}">
+          <span class="ig-handle">${esc(handle)}</span>${esc(caption)}
+          <div class="ig-hashtags">${esc(hashtags)}</div>
+        </div>
+        <div class="ig-best-time">⏰ Best time to post: ${esc(bestTime)}</div>
+      </div>
+      <div class="char-counter-wrap">
+        <textarea class="edit-field" id="edit-ig-${id}"
+          oninput="updateCharCount('ig-cc-${id}',this.value.length,${CHAR_LIMITS.ig})"
+          placeholder="Edit caption + hashtags...">${esc(caption+'\n'+hashtags)}</textarea>
+        <span class="char-counter" id="ig-cc-${id}">${(caption+hashtags).length}/${CHAR_LIMITS.ig}</span>
+      </div>
+      <div class="variant-strip" id="var-ig-${id}">
+        <div class="variant-strip-lbl">A/B VARIANT — CAPTION</div>
+        <div id="var-ig-text-${id}"></div>
+        <button class="btn-use-variant" onclick="useVariant('${id}','ig')">Use this variant</button>
+      </div>`;
+  }
+
+  function buildTtPreview(id, tt, initials) {
+    const hook     = tt.hook     || '';
+    const script   = tt.script   || '';
+    const hashtags = tt.hashtags || '';
+    const bestTime = tt.best_time || 'Today 7pm';
+    const handle   = MOCK_SHOPIFY_DATA.store_name.toLowerCase().replace(/\s/g,'');
+    return `
+      <div class="tt-preview">
+        <div class="tt-video">
+          <div class="tt-bg-text">${esc(hook)}</div>
+          <div class="tt-overlay">
+            <div class="tt-user">
+              <div class="tt-avatar">${initials}</div>
+              <span class="tt-handle">@${esc(handle)}</span>
+            </div>
+            <div class="tt-hook" id="tt-hook-disp-${id}">${esc(hook)}</div>
+            <div class="tt-script" id="tt-script-disp-${id}">${esc(script)}</div>
+            <div class="tt-hashtags">${esc(hashtags)}</div>
+          </div>
+          <div class="tt-sidebar">
+            <div><div class="tt-side-btn">❤️</div><div class="tt-side-lbl">Like</div></div>
+            <div><div class="tt-side-btn">💬</div><div class="tt-side-lbl">Comment</div></div>
+            <div><div class="tt-side-btn">↗️</div><div class="tt-side-lbl">Share</div></div>
+          </div>
+        </div>
+        <div class="tt-best-time">⏰ Best time to post: ${esc(bestTime)}</div>
+      </div>
+      <div class="char-counter-wrap">
+        <textarea class="edit-field" id="edit-tt-${id}"
+          oninput="updateCharCount('tt-cc-${id}',this.value.length,${CHAR_LIMITS.tt})"
+          placeholder="Edit hook + script + hashtags...">${esc(hook+'\n\n'+script+'\n\n'+hashtags)}</textarea>
+        <span class="char-counter" id="tt-cc-${id}">${(hook+script+hashtags).length}/${CHAR_LIMITS.tt}</span>
+      </div>
+      <div class="variant-strip" id="var-tt-${id}">
+        <div class="variant-strip-lbl">A/B VARIANT — HOOK</div>
+        <div id="var-tt-text-${id}"></div>
+        <button class="btn-use-variant" onclick="useVariant('${id}','tt')">Use this variant</button>
+      </div>`;
+  }
+
+  function switchTab(id, tab, btn) {
+    document.querySelectorAll(`#tabs-${id} .ptab`).forEach(t => t.classList.remove('active'));
+    document.querySelectorAll(`#panels-${id} .ppanel`).forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`ppanel-${id}-${tab}`).classList.add('active');
+    // Set best-time note per tab
+    const cd = _copyStore[id];
+    const times = { email: 'Weekday morning 9am', ig: cd?.instagram?.best_time || 'Today 6pm', tt: cd?.tiktok?.best_time || 'Today 7pm' };
+    const note  = document.getElementById(`sched-note-${id}`);
+    if (note) note.textContent = `AI recommends: ${times[tab]}`;
+  }
+
+  function toggleEdit(id) {
+    const btn     = document.getElementById(`edit-btn-${id}`);
+    const editing = btn.classList.toggle('editing');
+    document.querySelectorAll(`#panels-${id} .edit-field`).forEach(f => f.classList.toggle('show', editing));
+    btn.textContent = editing ? '✓ Done editing' : '✏ Edit copy';
+    if (!editing) applyEdits(id);
+  }
+
+  function applyEdits(id) {
+    const emailTA = document.getElementById(`edit-email-${id}`);
+    const igTA    = document.getElementById(`edit-ig-${id}`);
+    const ttTA    = document.getElementById(`edit-tt-${id}`);
+    if (emailTA) {
+      const bodyDisp = document.getElementById(`email-body-disp-${id}`);
+      if (bodyDisp) {
+        const paras = emailTA.value.split('\n').filter(Boolean);
+        const cd = _copyStore[id]?.email || {};
+        bodyDisp.innerHTML = paras.map(p=>`<p>${esc(p)}</p>`).join('') + `<div class="email-cta-btn">${esc(cd.cta||'Shop Now')}</div>`;
+      }
+    }
+    if (igTA) {
+      const igDisp = document.getElementById(`ig-caption-disp-${id}`);
+      const handle = MOCK_SHOPIFY_DATA.store_name.toLowerCase().replace(/\s/g,'');
+      if (igDisp) {
+        const lines = igTA.value.split('\n');
+        const cap  = lines.filter(l=>!l.startsWith('#')).join(' ');
+        const tags = lines.filter(l=>l.startsWith('#')).join(' ');
+        igDisp.innerHTML = `<span class="ig-handle">${esc(handle)}</span>${esc(cap)}<div class="ig-hashtags">${esc(tags)}</div>`;
+      }
+    }
+    if (ttTA) {
+      const lines  = ttTA.value.split('\n').filter(Boolean);
+      const hookD  = document.getElementById(`tt-hook-disp-${id}`);
+      const scriptD= document.getElementById(`tt-script-disp-${id}`);
+      if (hookD)  hookD.textContent  = lines[0] || '';
+      if (scriptD)scriptD.textContent = lines.slice(1).filter(l=>!l.startsWith('#')).join(' ');
+    }
+  }
+
+  function updateCharCount(counterId, len, limit) {
+    const el = document.getElementById(counterId);
+    if (!el) return;
+    el.textContent = `${len}/${limit}`;
+    el.className = 'char-counter' + (len > limit ? ' over' : len > limit * 0.9 ? ' warn' : '');
+  }
+
+  function setAudience(id, segKey, btn) {
+    document.querySelectorAll(`#ppanel-${id}-email .aud-chip`).forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const seg = AUDIENCE_SEGMENTS[segKey];
+    const countEl = document.getElementById(`aud-count-${id}`);
+    const revEl   = document.getElementById(`est-rev-${id}`);
+    if (countEl) countEl.textContent = `${seg.count} contacts`;
+    if (revEl)   revEl.textContent   = `$${Math.round(seg.count * 0.28 * 71.94)}`;
+  }
+
+  function setSchedule(id, mode, btn) {
+    document.querySelectorAll(`#sched-row-${id} .sched-opt`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const inp  = document.getElementById(`sched-input-${id}`);
+    const note = document.getElementById(`sched-note-${id}`);
+    if (mode === 'custom') {
+      inp.classList.add('show');
+      if (note) note.textContent = '';
+    } else {
+      inp.classList.remove('show');
+      if (mode === 'best' && note) {
+        const cd = _copyStore[id];
+        const bestTime = cd?.instagram?.best_time || cd?.tiktok?.best_time || 'Today 6pm';
+        note.textContent = `AI recommends: ${bestTime}`;
+      } else if (note) {
+        note.textContent = '';
+      }
+    }
+  }
+
+  async function genVariant(id) {
+    const btn = document.getElementById(`ab-btn-${id}`);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ab-spinner">↻</span> Generating…';
+
+    // Which tab is active?
+    const activePill = document.querySelector(`#tabs-${id} .ptab.active`);
+    const tabText = activePill?.textContent?.trim() || 'Email';
+    const tabKey = tabText.includes('Insta') ? 'ig' : tabText.includes('TikTok') ? 'tt' : 'email';
+
+    const cd   = _copyStore[id] || {};
+    const apiKey = sessionStorage.getItem('mi_api_key');
+    const hint = tabKey === 'email'
+      ? `Original subject: "${cd.email?.subject}". Write ONE alternative subject line (max 8 words). Output just the subject line text, nothing else.`
+      : tabKey === 'ig'
+      ? `Original caption: "${cd.instagram?.caption}". Write ONE alternative Instagram caption (max 130 chars, same hashtags ok). Output just the caption text.`
+      : `Original hook: "${cd.tiktok?.hook}". Write ONE alternative TikTok opening hook (max 8 words, punchy). Output just the hook text.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6', max_tokens: 120,
+          system: 'You are a copywriter creating A/B test variants. Output ONLY the variant text with no explanation, quotes, or punctuation beyond what belongs in the copy itself.',
+          messages: [{ role:'user', content: hint }]
+        })
+      });
+      const data = await res.json();
+      updateCost(data.usage.input_tokens, data.usage.output_tokens);
+      const variantText = data.content[0].text.trim();
+      const stripEl = document.getElementById(`var-${tabKey}-${id}`);
+      const textEl  = document.getElementById(`var-${tabKey}-text-${id}`);
+      if (stripEl && textEl) {
+        textEl.textContent = variantText;
+        stripEl.classList.add('show');
+        stripEl._variant = variantText;
+        stripEl._tabKey  = tabKey;
+      }
+    } catch(e) {
+      console.error(e);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '⚡ A/B variant';
+  }
+
+  function useVariant(id, tabKey) {
+    const stripEl = document.getElementById(`var-${tabKey}-${id}`);
+    if (!stripEl?._variant) return;
+    const cd = _copyStore[id];
+    if (tabKey === 'email') {
+      const subjEl = document.getElementById(`email-subj-${id}`);
+      if (subjEl) subjEl.textContent = stripEl._variant;
+      if (cd?.email) cd.email.subject = stripEl._variant;
+    } else if (tabKey === 'ig') {
+      const cd2 = _copyStore[id];
+      const igTA = document.getElementById(`edit-ig-${id}`);
+      if (igTA) igTA.value = stripEl._variant + '\n' + (cd2?.instagram?.hashtags||'');
+      const igDisp = document.getElementById(`ig-caption-disp-${id}`);
+      const handle = MOCK_SHOPIFY_DATA.store_name.toLowerCase().replace(/\s/g,'');
+      if (igDisp) igDisp.innerHTML = `<span class="ig-handle">${esc(handle)}</span>${esc(stripEl._variant)}<div class="ig-hashtags">${esc(cd?.instagram?.hashtags||'')}</div>`;
+    } else if (tabKey === 'tt') {
+      const hookD = document.getElementById(`tt-hook-disp-${id}`);
+      if (hookD) hookD.textContent = stripEl._variant;
+      if (cd?.tiktok) cd.tiktok.hook = stripEl._variant;
+    }
+    stripEl.classList.remove('show');
+  }
+
+  function handleLaunch(id) {
+    const btn  = document.getElementById(`launch-btn-${id}`);
+    const card = document.querySelector(`[data-action="${id}"]`);
+    // Which tab is active — launch for that platform
+    const activePill = document.querySelector(`#tabs-${id} .ptab.active`);
+    const platform   = activePill?.textContent?.includes('Insta') ? 'Instagram'
+                     : activePill?.textContent?.includes('TikTok') ? 'TikTok' : 'Email';
+    const schedOpt = document.querySelector(`#sched-row-${id} .sched-opt.active`);
+    const schedMode = schedOpt?.textContent?.trim() || 'Now';
+
+    btn.innerHTML = `<span>⏳</span> ${schedMode === 'Now' ? 'Launching' : 'Scheduling'}…`;
+    btn.disabled  = true;
+    setTimeout(() => {
+      const verb = schedMode === 'Now' ? 'Launched' : 'Scheduled';
+      btn.innerHTML = `<span>✅</span> ${verb} on ${platform}!`;
+      btn.classList.add('done');
+      card.style.borderLeftColor = 'var(--green)';
+      // Don't fade — keep visible so user can still launch other platforms
+    }, 1400);
+  }
+
+  function dismissAction(id) {
+    const card = document.querySelector(`[data-action="${id}"]`);
+    if (!card) return;
+    card.style.transition = 'opacity 0.25s, transform 0.25s, max-height 0.4s, margin 0.4s, padding 0.4s, border 0.4s';
+    card.style.opacity    = '0';
+    card.style.transform  = 'translateX(24px)';
+    const h = card.offsetHeight;
+    card.style.maxHeight  = h + 'px';
+    setTimeout(() => {
+      card.style.maxHeight = '0';
+      card.style.padding   = '0';
+      card.style.marginTop = '0';
+      card.style.border    = 'none';
+    }, 280);
+  }
+
+  function clearRail() {
+    pendingCount = 0;
+    actionSeq    = 0;
+  }
+
+  function updateFeedPad() {}
+
+  // ─────────────────────────────────────────────────────────────────
+  // UI STATE
+  // ─────────────────────────────────────────────────────────────────
+
+  function setUI(state) {
+    const running = state === 'running';
+    document.getElementById('run-btn').disabled    = running;
+    document.getElementById('query-input').disabled = running;
+    const li = document.getElementById('live-ind');
+    running ? li.classList.add('on') : li.classList.remove('on');
+  }
+
+  function showErr(msg) {
+    const div = document.createElement('div');
+    div.className = 'err-card';
+    div.textContent = msg;
+    document.getElementById('cards-feed').appendChild(div);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // JSON PARSING (robust — strips markdown fences)
+  // ─────────────────────────────────────────────────────────────────
+
+  function parseJ(raw) {
+    let s = raw.trim();
+    if (s.startsWith('```')) {
+      s = s.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim();
+    }
+    return JSON.parse(s);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // API CALL
+  // ─────────────────────────────────────────────────────────────────
+
+  async function callAgent(key, query, ctx) {
+    const apiKey = sessionStorage.getItem('mi_api_key');
+    if (!apiKey) throw new Error('No API key — please refresh and enter your key.');
+
+    addTrace(key, '→', `Analysing — ${JSON.stringify(ctx).slice(0, 80)}`);
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: AGENT_PROMPTS[key],
+        messages: [{ role: 'user', content: `User query: "${query}"\n\nContext:\n${JSON.stringify(ctx, null, 2)}` }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content[0].text;
+    updateCost(data.usage.input_tokens, data.usage.output_tokens);
+    addTrace(key, '←', text.slice(0, 120));
+    return text;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // SHOPIFY LIVE FETCH
+  // ─────────────────────────────────────────────────────────────────
+
+  async function fetchShopify() {
+    const domain = document.getElementById('s-domain').value.trim();
+    const token  = document.getElementById('s-token').value.trim();
+    if (!domain || !token) throw new Error('Shopify domain and token required for live mode.');
+
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const [oRes, pRes] = await Promise.all([
+      fetch(`https://${domain}/admin/api/2026-01/orders.json?status=any&created_at_min=${since}`,
+        { headers: { 'X-Shopify-Access-Token': token } }),
+      fetch(`https://${domain}/admin/api/2026-01/products.json?limit=10`,
+        { headers: { 'X-Shopify-Access-Token': token } })
+    ]);
+    const { orders }   = await oRes.json();
+    const { products } = await pRes.json();
+
+    const revenue = orders.reduce((s, o) => s + parseFloat(o.total_price), 0);
+    return {
+      store_name: 'Your Store',
+      period: 'Last 7 days',
+      currency: orders[0]?.currency || 'USD',
+      summary: {
+        total_revenue: Math.round(revenue * 100) / 100,
+        orders: orders.length,
+        avg_order_value: orders.length ? Math.round(revenue / orders.length * 100) / 100 : 0,
+        revenue_change_pct: null
+      },
+      top_products: products.slice(0, 5).map(p => ({
+        id: p.id, title: p.title,
+        sku: p.variants[0]?.sku || '',
+        inventory: p.variants.reduce((s, v) => s + (v.inventory_quantity || 0), 0),
+        trend: 'unknown', change_pct: null,
+        insight: `${p.title} — ${p.variants.length} variant(s)`
+      })),
+      alerts: [],
+      customer_segments: { repeat_buyers: 0, lapsed_30d: 0, new_this_week: 0 }
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // MAIN AGENT LOOP
+  // ─────────────────────────────────────────────────────────────────
+
+  async function runAgentLoop(query) {
+    setUI('running');
+    clearFeed();
+    clearRail();
+    clearTrace();
+    initStepper();
+
+    try {
+      // ── 1. Orchestrator ──────────────────────────────────────────
+      stepState('ORCHESTRATOR', 'active');
+      const orchRaw  = await callAgent('ORCHESTRATOR', query, {});
+      const orchData = parseJ(orchRaw);
+      stepState('ORCHESTRATOR', 'done');
+      addTraceSep();
+
+      // ── 2. Signal Analyst ────────────────────────────────────────
+      stepState('ANALYST', 'active');
+      const shopCtx = dataMode === 'mock' ? MOCK_SHOPIFY_DATA : await fetchShopify();
+      const analRaw  = await callAgent('ANALYST', query, { shopify: shopCtx, focus: orchData.focus });
+      const analData = parseJ(analRaw);
+      renderCard('ANALYST', analData);
+      stepState('ANALYST', 'done');
+      addTraceSep();
+
+      // ── 3. Strategist ─────────────────────────────────────────────
+      stepState('STRATEGY', 'active');
+      const stratRaw  = await callAgent('STRATEGY', query, { signals: analData, priority: orchData.priority });
+      const stratData = parseJ(stratRaw);
+      renderCard('STRATEGY', stratData);
+      stepState('STRATEGY', 'done');
+      addTraceSep();
+
+      // ── 4 + 5. Activation + Critic per action ────────────────────
+      const actions = stratData.actions || [];
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
+
+        // Reset pills for each pass if not first
+        if (i > 0) {
+          stepState('COPY',   'pending');
+          stepState('CRITIC', 'pending');
+        }
+
+        stepState('COPY', 'active');
+        const copyRaw  = await callAgent('COPY', query, { action, store_name: shopCtx.store_name });
+        const copyData = parseJ(copyRaw);
+        stepState('COPY', 'done');
+        addTraceSep();
+
+        stepState('CRITIC', 'active');
+        const critRaw  = await callAgent('CRITIC', query, { draft: copyData, action });
+        const critData = parseJ(critRaw);
+        stepState('CRITIC', 'done');
+        addTraceSep();
+
+        const finalCopy = (critData.approved !== false || !critData.revised_copy)
+          ? copyData
+          : critData.revised_copy;
+
+        if (finalCopy) addAction(finalCopy, action, critData.score);
+      }
+
+    } catch (err) {
+      console.error(err);
+      showErr('We hit a snag — check your API key and try again. ' + (err.message || ''));
+    }
+
+    setUI('idle');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // ENTRY POINT
+  // ─────────────────────────────────────────────────────────────────
+
+  function runQuery() {
+    const q = document.getElementById('query-input').value.trim();
+    if (!q) return;
+    runAgentLoop(q);
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // INIT
+  // ─────────────────────────────────────────────────────────────────
+
+  checkKey();
+  renderStorePreview();
+
+  </script>
+</body>
+</html>
