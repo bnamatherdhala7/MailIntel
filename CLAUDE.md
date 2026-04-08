@@ -202,12 +202,44 @@ function updateCost(inputTokens, outputTokens) {
 
 ---
 
+## Claude Skills
+
+Three project-level skills are registered and should be invoked for these tasks:
+
+### `/frontend-build`
+Use when building or redesigning any UI in this project. Encodes the full Cavendish design system (colours, fonts, shadows, spacing, component patterns, micro-interactions). Invoke with a description of what to build or redesign.
+
+```
+/frontend-build redesign the campaign card layout
+/frontend-build add a new onboarding overlay
+```
+
+### `/github-push`
+Use when committing and pushing changes to GitHub. Handles secrets scanning, `.gitignore` hygiene, selective staging (never stages `.env`), structured commit messages, and push protection. Always invoke this instead of running raw git commands.
+
+```
+/github-push "Add side-by-side email editor"
+/github-push
+```
+
+### `/competitor-research`
+Use when evaluating new features or UX changes against the market. Researches 4–6 competitors in a category, produces a feature matrix, identifies UX patterns worth adopting, and defines the positioning gap. Save output to `docs/competitive-analysis.md`.
+
+```
+/competitor-research email marketing tools for SMBs
+/competitor-research AI commerce intelligence tools
+```
+
+---
+
 ## Running Locally
 
 ```bash
-npx serve . -l 3000
+node dev-server.js
 # open http://localhost:3000
 ```
+
+`dev-server.js` reads `.env`, injects the API key as `__DEV_API_KEY__` at serve time, and stores it in `sessionStorage`. Key is cleared when the tab closes — never persists to disk.
 
 No npm install. No build step. One HTML file.
 
