@@ -1852,7 +1852,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     document.getElementById(`ppanel-${id}-${tab}`).classList.add('active');
     // Set best-time note per tab
     const cd = _copyStore[id];
-    const times = { email: 'Weekday morning 9am', ig: cd?.instagram?.best_time || 'Today 6pm', tt: cd?.tiktok?.best_time || 'Today 7pm' };
+    const times = { email: cd?.email?.best_time || 'Weekday morning 9am', ig: cd?.instagram?.best_time || 'Today 6pm', tt: cd?.tiktok?.best_time || 'Today 7pm' };
     const note  = document.getElementById(`sched-note-${id}`);
     if (note) note.textContent = `AI recommends: ${times[tab]}`;
   }
@@ -1940,7 +1940,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
       inp.classList.remove('show');
       if (mode === 'best' && note) {
         const cd = _copyStore[id];
-        const bestTime = cd?.instagram?.best_time || cd?.tiktok?.best_time || 'Today 6pm';
+        const bestTime = cd?.email?.best_time || cd?.instagram?.best_time || cd?.tiktok?.best_time || 'Today 6pm';
         note.textContent = `AI recommends: ${bestTime}`;
       } else if (note) {
         note.textContent = '';
@@ -2096,10 +2096,28 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     if (s.includes('```')) {
       s = s.replace(/```(?:json)?\s*/g, '').replace(/```/g, '').trim();
     }
-    // Extract the first {...} block — handles preamble/postamble text from model
-    const match = s.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
+    // Find the LAST complete {...} block by brace-counting from the last {
+    // This handles Critic reasoning preamble before the final JSON output
+    const extracted = extractLastJson(s);
+    if (extracted) return JSON.parse(extracted);
     return JSON.parse(s);
+  }
+
+  function extractLastJson(s) {
+    // Walk backwards to find the last { that opens a complete JSON object
+    const start = s.lastIndexOf('{');
+    if (start === -1) return null;
+    let depth = 0, inStr = false, escape = false;
+    for (let i = start; i < s.length; i++) {
+      const c = s[i];
+      if (escape)          { escape = false; continue; }
+      if (c === '\\' && inStr) { escape = true; continue; }
+      if (c === '"')           { inStr = !inStr; continue; }
+      if (inStr)               continue;
+      if (c === '{') depth++;
+      if (c === '}') { depth--; if (depth === 0) return s.slice(start, i + 1); }
+    }
+    return null;
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -2151,7 +2169,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
 
     const data  = await res.json();
     const text  = data.content[0].text;
-    const costs = COST_PER_M_BY_MODEL[model] || COST_PER_M;
+    const costs = COST_PER_M_BY_MODEL[model] || COST_PER_M_BY_MODEL['claude-haiku-4-5-20251001'];
     sessionCost += (data.usage.input_tokens  / 1_000_000 * costs.input)
                  + (data.usage.output_tokens / 1_000_000 * costs.output);
     const el = document.getElementById('cost-counter');
@@ -2582,17 +2600,19 @@ Urgency: ${action.urgency}${trendResults ? `\nMarket trends (use to make copy ti
 
         stepState('CRITIC', 'active');
         // Critic only needs email subject+body, not all 3 platforms
-        const critPrompt = `Action: ${action.rationale}
+        const critPrompt = `Action type: ${action.type} | Urgency: ${action.urgency}
+Rationale: ${action.rationale}
 Email subject: ${copyData.email?.subject}
-Email body: ${copyData.email?.body?.slice(0,300)}
-Instagram caption: ${copyData.instagram?.caption}`;
+Email body: ${copyData.email?.body?.slice(0, 280)}
+Instagram caption: ${copyData.instagram?.caption}
+TikTok hook: ${copyData.tiktok?.hook}`;
         const critRaw  = await callAgent('CRITIC', critPrompt);
         const critData = parseJ(critRaw);
         stepState('CRITIC', 'done');
         addTraceSep();
 
-        const finalCopy = (critData.approved !== false || !critData.revised_copy)
-          ? copyData : critData.revised_copy;
+        const finalCopy = (critData.approved !== false && !critData.revised_copy)
+          ? copyData : (critData.revised_copy || copyData);
         if (finalCopy) addAction(finalCopy, action, critData.score, trendResults);
       }
 
