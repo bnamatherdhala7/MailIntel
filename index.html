@@ -1149,6 +1149,11 @@ Output only valid JSON.`
     sessionStorage.setItem('mi_shopify_token', __DEV_SHOPIFY_TOKEN__);
   }
 
+  // Auto-inject Brave Search key
+  if (typeof __DEV_BRAVE_KEY__ !== 'undefined' && __DEV_BRAVE_KEY__) {
+    sessionStorage.setItem('mi_brave_key', __DEV_BRAVE_KEY__);
+  }
+
   function checkKey() {
     if (sessionStorage.getItem('mi_api_key')) {
       document.getElementById('api-overlay').style.display = 'none';
@@ -2166,6 +2171,27 @@ Output only valid JSON.`
   }
 
   // ─────────────────────────────────────────────────────────────────
+  // BRAVE SEARCH — real trend signals for Strategist
+  // ─────────────────────────────────────────────────────────────────
+
+  async function searchTrends(query) {
+    try {
+      const res = await fetch(`/brave-proxy?q=${encodeURIComponent(query)}&count=4`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const results = (data.web?.results || []).slice(0, 4);
+      if (!results.length) return null;
+      // Compress to one line per result: title + description snippet
+      return results
+        .map(r => `• ${r.title}: ${(r.description || '').slice(0, 120)}`)
+        .join('\n');
+    } catch (e) {
+      console.warn('Brave search failed:', e.message);
+      return null;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // CHAT INTERFACE
   // ─────────────────────────────────────────────────────────────────
 
@@ -2392,11 +2418,15 @@ Segments: repeat=${shopCtx.customer_segments.repeat_buyers} lapsed=${shopCtx.cus
       stepState('ANALYST', 'done');
       addTraceSep();
 
-      // Strategist — only signals, no raw Shopify data
+      // Strategist — signals + real web trends from Brave Search
       stepState('STRATEGY', 'active');
+      const trendQuery = `${analData.win?.product || shopCtx.store_name} ${new Date().toLocaleString('default',{month:'long'})} 2026 trend`;
+      addTrace('STRATEGY', '🔍', `Searching trends: "${trendQuery}"`);
+      const trendResults = await searchTrends(trendQuery);
       const stratPrompt = `Priority: ${orchData.priority}
 Win: ${analData.win?.product} — ${analData.win?.insight}
-Opportunity: ${analData.opportunity?.product} — ${analData.opportunity?.insight} (upsell: ${analData.opportunity?.upsell_angle})`;
+Opportunity: ${analData.opportunity?.product} — ${analData.opportunity?.insight} (upsell: ${analData.opportunity?.upsell_angle})
+${trendResults ? `\nLive web trends:\n${trendResults}` : ''}`;
       const stratRaw  = await callAgent('STRATEGY', stratPrompt);
       const stratData = parseJ(stratRaw);
       renderCard('STRATEGY', stratData);

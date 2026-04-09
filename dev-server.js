@@ -25,9 +25,11 @@ const API_KEY       = process.env.ANTHROPIC_API_KEY || '';
 const SHOPIFY_URL   = (process.env.SHOPIFY_SHOP_URL || '').replace(/\/$/, '');
 const SHOPIFY_TOKEN = process.env.SHOPIFY_ADMIN_API_KEY || '';
 const SHOPIFY_HOST  = SHOPIFY_URL.replace('https://', '');
+const BRAVE_KEY     = process.env.BRAVE_SEARCH_API_KEY || '';
 
 if (!API_KEY)    console.warn('⚠  ANTHROPIC_API_KEY not found in .env');
 if (!SHOPIFY_URL) console.warn('⚠  SHOPIFY_SHOP_URL not found in .env');
+if (!BRAVE_KEY)  console.warn('⚠  BRAVE_SEARCH_API_KEY not found in .env');
 
 const MIME = {
   '.html': 'text/html', '.css': 'text/css',
@@ -68,11 +70,71 @@ function shopifyProxy(req, res) {
   proxyReq.end();
 }
 
+// ── Brave Search proxy — called by browser as /brave-proxy?q=... ───
+function braveProxy(req, res) {
+  const parsed = url.parse(req.url, true);
+  const q      = parsed.query.q || '';
+  const count  = parsed.query.count || '5';
+  const bravePath = `/res/v1/web/search?q=${encodeURIComponent(q)}&count=${count}&search_lang=en&freshness=pw`;
+
+  const options = {
+    hostname: 'api.search.brave.com',
+    path:     bravePath,
+    method:   'GET',
+    headers:  {
+      'Accept':               'application/json',
+      'Accept-Encoding':      'gzip',
+      'X-Subscription-Token': BRAVE_KEY
+    }
+  };
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+
+  const proxyReq = https.request(options, proxyRes => {
+    // Brave may return gzip — collect raw buffer then decompress
+    const chunks = [];
+    proxyRes.on('data', chunk => chunks.push(chunk));
+    proxyRes.on('end', () => {
+      const buf = Buffer.concat(chunks);
+      const encoding = proxyRes.headers['content-encoding'];
+      const decompress = encoding === 'gzip'
+        ? require('zlib').gunzip
+        : encoding === 'deflate'
+        ? require('zlib').inflate
+        : null;
+
+      if (decompress) {
+        decompress(buf, (err, decoded) => {
+          if (err) { res.writeHead(500); res.end(JSON.stringify({ error: err.message })); return; }
+          res.writeHead(proxyRes.statusCode);
+          res.end(decoded);
+        });
+      } else {
+        res.writeHead(proxyRes.statusCode);
+        res.end(buf);
+      }
+    });
+  });
+
+  proxyReq.on('error', e => {
+    res.writeHead(500);
+    res.end(JSON.stringify({ error: e.message }));
+  });
+
+  proxyReq.end();
+}
+
 // ── Static file server ─────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   // Route: Shopify proxy
   if (req.url.startsWith('/shopify-proxy')) {
     return shopifyProxy(req, res);
+  }
+
+  // Route: Brave Search proxy
+  if (req.url.startsWith('/brave-proxy')) {
+    return braveProxy(req, res);
   }
 
   const filePath = req.url === '/' || req.url === '/index.html'
@@ -87,6 +149,7 @@ const server = http.createServer((req, res) => {
 var __DEV_API_KEY__       = ${JSON.stringify(API_KEY)};
 var __DEV_SHOPIFY_URL__   = ${JSON.stringify(SHOPIFY_URL)};
 var __DEV_SHOPIFY_TOKEN__ = ${JSON.stringify(SHOPIFY_TOKEN)};
+var __DEV_BRAVE_KEY__     = ${JSON.stringify(BRAVE_KEY)};
 </script>\n`;
       const html = data.toString().replace('<script>', injected + '<script>');
       res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -101,7 +164,10 @@ var __DEV_SHOPIFY_TOKEN__ = ${JSON.stringify(SHOPIFY_TOKEN)};
 server.listen(PORT, () => {
   console.log(`\n  MailIntel dev server running`);
   console.log(`  http://localhost:${PORT}\n`);
-  console.log(`  API key:      ${API_KEY ? API_KEY.slice(0, 18) + '…' : 'NOT FOUND'}`);
+  console.log(`  API key:      ${API_KEY   ? API_KEY.slice(0, 18)   + '…' : 'NOT FOUND'}`);
   console.log(`  Shopify:      ${SHOPIFY_URL || 'NOT FOUND'}`);
-  console.log(`  Proxy:        http://localhost:${PORT}/shopify-proxy?path=shop.json\n`);
+  console.log(`  Brave Search: ${BRAVE_KEY  ? BRAVE_KEY.slice(0, 12) + '…' : 'NOT FOUND'}`);
+  console.log(`  Proxies:`);
+  console.log(`    /shopify-proxy?path=shop.json`);
+  console.log(`    /brave-proxy?q=canvas+tote+trend\n`);
 });
