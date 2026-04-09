@@ -426,6 +426,47 @@
     }
     .cc-dismiss:hover { background: var(--surface-2); color: var(--text); }
 
+    /* ── MARKET CONTEXT STRIP ───────────────────────────────────── */
+    .market-strip {
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,124,137,0.04);
+    }
+    .market-strip-hd {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; cursor: pointer; user-select: none;
+      transition: background 0.15s;
+    }
+    .market-strip-hd:hover { background: rgba(0,124,137,0.07); }
+    .market-strip-label {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 0.09em;
+      color: var(--teal); text-transform: uppercase; flex-shrink: 0;
+    }
+    .market-strip-sub {
+      font-family: var(--sans); font-size: 11px; color: var(--muted); flex: 1;
+    }
+    .market-strip-chevron {
+      font-size: 10px; color: var(--subtle); transition: transform 0.2s; flex-shrink: 0;
+    }
+    .market-strip-chevron.open { transform: rotate(180deg); }
+    .market-strip-body {
+      display: none; padding: 0 16px 10px;
+    }
+    .market-strip-body.open { display: block; }
+    .market-bullet {
+      display: flex; gap: 7px; padding: 5px 0;
+      border-bottom: 1px solid rgba(0,124,137,0.08); align-items: flex-start;
+    }
+    .market-bullet:last-child { border-bottom: none; }
+    .market-bullet-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--teal);
+      flex-shrink: 0; margin-top: 5px;
+    }
+    .market-bullet-text {
+      font-family: var(--sans); font-size: 11px; color: var(--text); line-height: 1.5;
+    }
+    .market-bullet-title { font-weight: 500; }
+    .market-bullet-snippet { color: var(--muted); display: block; font-size: 10.5px; }
+
     /* ── CRITIC SCORE ────────────────────────────────────────────── */
     .critic-score-bar {
       display: flex; align-items: center; gap: 10px;
@@ -1142,6 +1183,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   let _pendingConfirm  = null; // { query, orchData } — avoids JSON-in-HTML escaping issues
   const _copyStore    = {};
   const _criticScores = {};
+  const _trendStore   = {}; // id → raw trend string from Brave Search
 
   // ─────────────────────────────────────────────────────────────────
   // API KEY
@@ -1515,7 +1557,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   // CAMPAIGN CARDS
   // ─────────────────────────────────────────────────────────────────
 
-  function addAction(copyData, action, criticScore) {
+  function addAction(copyData, action, criticScore, trendData) {
     actionSeq++;
     const id   = `a${actionSeq}`;
     const feed = document.getElementById('cards-feed');
@@ -1532,6 +1574,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     }
     _copyStore[id] = cd;
     _criticScores[id] = criticScore || 8;
+    if (trendData) _trendStore[id] = trendData;
 
     const title     = action?.type === 'email' ? 'Email Campaign' : 'Campaign';
     const rationale = esc(action?.rationale || '');
@@ -1546,6 +1589,36 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     const emailHtml = buildEmailPreview(id, cd.email || {}, storeInitials);
     const igHtml    = buildIgPreview(id, cd.instagram || {}, storeInitials);
     const ttHtml    = buildTtPreview(id, cd.tiktok || {}, storeInitials);
+
+    // Market context strip — parse bullet lines from Brave result string
+    let marketStripHtml = '';
+    if (trendData) {
+      const bullets = trendData.split('\n').filter(l => l.startsWith('•')).slice(0, 4);
+      const bulletHtml = bullets.map(b => {
+        const stripped = b.replace(/^•\s*/, '');
+        const colonIdx = stripped.indexOf(':');
+        const title2  = colonIdx > -1 ? stripped.slice(0, colonIdx).trim() : stripped.slice(0, 60);
+        const snippet = colonIdx > -1 ? stripped.slice(colonIdx + 1).trim() : '';
+        return `<div class="market-bullet">
+          <div class="market-bullet-dot"></div>
+          <div class="market-bullet-text">
+            <span class="market-bullet-title">${esc(title2)}</span>
+            ${snippet ? `<span class="market-bullet-snippet">${esc(snippet)}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      marketStripHtml = `
+      <div class="market-strip">
+        <div class="market-strip-hd" onclick="toggleMarket('${id}')">
+          <span class="market-strip-label">🔍 Market Context</span>
+          <span class="market-strip-sub">Live trends · shaped this copy</span>
+          <span class="market-strip-chevron" id="mchev-${id}">▼</span>
+        </div>
+        <div class="market-strip-body" id="mbody-${id}">
+          ${bulletHtml}
+        </div>
+      </div>`;
+    }
 
     const div = document.createElement('div');
     div.className = 'campaign-card';
@@ -1568,6 +1641,8 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
         <span class="cs-num" style="color:${scoreColor}">${score}/10</span>
         <span class="cs-verdict" style="background:${scoreVerdictBg};color:${scoreVerdictColor}">${scoreVerdict}</span>
       </div>
+
+      ${marketStripHtml}
 
       <div class="platform-tabs" id="tabs-${id}">
         <button class="ptab active" onclick="switchTab('${id}','email',this)"><span class="ptab-icon">✉</span> Email</button>
@@ -1978,6 +2053,14 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
       card.style.marginTop = '0';
       card.style.border    = 'none';
     }, 280);
+  }
+
+  function toggleMarket(id) {
+    const body  = document.getElementById(`mbody-${id}`);
+    const chev  = document.getElementById(`mchev-${id}`);
+    if (!body) return;
+    const open = body.classList.toggle('open');
+    if (chev) chev.classList.toggle('open', open);
   }
 
   function clearRail() {
@@ -2487,11 +2570,11 @@ ${trendResults ? `\nLive web trends:\n${trendResults}` : ''}`;
         if (i > 0) { stepState('COPY', 'pending'); stepState('CRITIC', 'pending'); }
 
         stepState('COPY', 'active');
-        // Compressed copy prompt — only what Activation needs
+        // Compressed copy prompt — only what Activation needs + trend signal
         const copyPrompt = `Store: ${shopCtx.store_name}
 Action: ${action.type} | Trigger: ${action.trigger}
 Rationale: ${action.rationale}
-Urgency: ${action.urgency}`;
+Urgency: ${action.urgency}${trendResults ? `\nMarket trends (use to make copy timely and specific):\n${trendResults.split('\n').slice(0,3).join('\n')}` : ''}`;
         const copyRaw  = await callAgent('COPY', copyPrompt);
         const copyData = parseJ(copyRaw);
         stepState('COPY', 'done');
@@ -2510,7 +2593,7 @@ Instagram caption: ${copyData.instagram?.caption}`;
 
         const finalCopy = (critData.approved !== false || !critData.revised_copy)
           ? copyData : critData.revised_copy;
-        if (finalCopy) addAction(finalCopy, action, critData.score);
+        if (finalCopy) addAction(finalCopy, action, critData.score, trendResults);
       }
 
       // Summary bubble
