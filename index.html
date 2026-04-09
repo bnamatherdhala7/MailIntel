@@ -54,6 +54,54 @@
       font-family: var(--sans); font-weight: 300; font-size: 11px;
       color: rgba(255,255,255,0.35); letter-spacing: 0.04em;
     }
+    #header-insights { display: flex; align-items: center; gap: 6px; }
+    .hdr-chip {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+      padding: 3px 10px; border-radius: 20px;
+      background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.1); white-space: nowrap;
+      transition: background 0.3s, color 0.3s;
+    }
+    .hdr-chip.loaded { color: var(--brand); background: rgba(255,224,27,0.08); border-color: rgba(255,224,27,0.2); }
+    .hdr-chip.alert  { color: #EF5F33;      background: rgba(239,95,51,0.1);  border-color: rgba(239,95,51,0.25); }
+    /* Confirm card */
+    .confirm-card {
+      background: var(--card); border-radius: var(--r-lg);
+      border: 1.5px solid var(--brand); box-shadow: var(--shadow-md);
+      padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;
+      animation: fadeUp 0.3s ease;
+    }
+    .confirm-card-title {
+      font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--text);
+    }
+    .confirm-card-focus {
+      font-family: var(--mono); font-size: 11px; color: var(--teal);
+      background: rgba(0,124,137,0.08); padding: 8px 12px; border-radius: var(--r-sm);
+      border-left: 3px solid var(--teal);
+    }
+    .confirm-card-sub {
+      font-family: var(--sans); font-size: 13px; color: var(--muted);
+    }
+    .confirm-actions { display: flex; gap: 10px; align-items: center; }
+    .confirm-btn-primary {
+      font-family: var(--display); font-size: 13px; font-weight: 700;
+      background: var(--brand); color: var(--brand-dark);
+      border: none; border-radius: 9px; padding: 9px 20px; cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+    .confirm-btn-primary:hover { transform: scale(1.02); }
+    .confirm-btn-primary:active { transform: scale(0.98); }
+    .confirm-btn-secondary {
+      font-family: var(--sans); font-size: 12px; color: var(--muted);
+      background: none; border: 1.5px solid var(--border-md);
+      border-radius: 20px; padding: 7px 16px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .confirm-btn-secondary:hover { border-color: var(--text); color: var(--text); }
+    .confirm-cost-note {
+      font-family: var(--mono); font-size: 10px; color: var(--subtle);
+      margin-left: auto;
+    }
     .header-right { display: flex; align-items: center; gap: 12px; }
     #cost-counter {
       font-family: var(--mono); font-weight: 500; font-size: 12px;
@@ -174,8 +222,71 @@
     }
     .mc-delta.down { color: #EF4444; }
 
+    /* ── CHAT FEED ──────────────────────────────────────────────── */
+    #chat-feed {
+      flex: 1; overflow-y: auto; padding: 16px 20px 8px;
+      display: flex; flex-direction: column; gap: 12px; min-height: 0;
+    }
+    #chat-feed::-webkit-scrollbar { width: 4px; }
+    #chat-feed::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+    .chat-welcome { display: flex; flex-direction: column; gap: 14px; }
+    .chat-welcome-title {
+      font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--text);
+    }
+    .chat-welcome-sub {
+      font-family: var(--sans); font-size: 13px; color: var(--muted); max-width: 520px;
+    }
+    .chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chat-suggest {
+      font-family: var(--sans); font-size: 12px; color: var(--text);
+      background: var(--card); border: 1.5px solid var(--border-md);
+      border-radius: 20px; padding: 7px 14px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .chat-suggest:hover { border-color: var(--brand); background: rgba(255,224,27,0.05); }
+    /* Chat messages */
+    .chat-msg { display: flex; flex-direction: column; gap: 2px; animation: cardUp 0.25s ease; }
+    .chat-msg-user { align-items: flex-end; }
+    .chat-msg-ai   { align-items: flex-start; }
+    .chat-bubble {
+      max-width: 80%; padding: 10px 14px; border-radius: 14px;
+      font-family: var(--sans); font-size: 13px; line-height: 1.55;
+    }
+    .chat-bubble-user {
+      background: var(--brand-dark); color: rgba(255,255,255,0.9);
+      border-radius: 14px 14px 4px 14px;
+    }
+    .chat-bubble-ai {
+      background: var(--card); color: var(--text);
+      border: 1px solid var(--border-md); border-radius: 14px 14px 14px 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .chat-bubble-ai strong { color: var(--text); font-weight: 600; }
+    .chat-bubble-ai .chat-campaign-btn {
+      display: inline-block; margin-top: 10px;
+      font-family: var(--display); font-size: 12px; font-weight: 700;
+      background: var(--brand); color: var(--brand-dark);
+      border: none; border-radius: 8px; padding: 7px 16px; cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+    .chat-campaign-btn:hover  { opacity: 0.88; transform: scale(1.02); }
+    .chat-campaign-btn:active { transform: scale(0.98); }
+    .chat-typing {
+      display: flex; align-items: center; gap: 4px; padding: 10px 14px;
+      background: var(--card); border: 1px solid var(--border-md);
+      border-radius: 14px 14px 14px 4px; width: fit-content;
+      box-shadow: var(--shadow-sm);
+    }
+    .chat-typing span {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--muted);
+      animation: typingDot 1.2s ease-in-out infinite;
+    }
+    .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingDot { 0%,60%,100% { opacity:0.3; transform:scale(0.8); } 30% { opacity:1; transform:scale(1); } }
+
     /* ── COMMAND AREA ───────────────────────────────────────────── */
-    #command-area { padding: 16px 20px 0; flex-shrink: 0; }
+    #command-area { padding: 10px 20px 16px; flex-shrink: 0; border-top: 1px solid var(--border); background: var(--surface); }
     .input-wrap {
       display: flex; gap: 8px; background: var(--card);
       border: 1.5px solid var(--border-md); border-radius: var(--r-lg);
@@ -688,7 +799,11 @@
     <div class="header-left">
       <div class="wordmark">MailIntel</div>
       <div class="header-divider"></div>
-      <div class="tagline">Central Brain for SMB Commerce</div>
+      <div id="header-insights">
+        <div class="hdr-chip" id="hdr-revenue" title="Revenue last 7 days">— Revenue</div>
+        <div class="hdr-chip" id="hdr-stock" title="Low stock items">— Low Stock</div>
+        <div class="hdr-chip" id="hdr-top" title="Top product">— Top Product</div>
+      </div>
     </div>
     <div class="header-right">
       <div class="live-indicator" id="live-ind">
@@ -717,67 +832,62 @@
       <!-- Store Metrics Bar -->
       <div id="metrics-bar">
         <div class="metric-cell">
-          <div class="mc-val" id="mb-revenue">$4,820</div>
+          <div class="mc-val" id="mb-revenue">—</div>
           <div class="mc-lbl">Revenue · 7d</div>
-          <div class="mc-delta" id="mb-rev-delta">+12.4%</div>
+          <div class="mc-delta" id="mb-rev-delta"></div>
         </div>
         <div class="metric-cell">
-          <div class="mc-val" id="mb-orders">67</div>
-          <div class="mc-lbl">Orders</div>
+          <div class="mc-val" id="mb-orders">—</div>
+          <div class="mc-lbl">Orders · 7d</div>
         </div>
         <div class="metric-cell">
-          <div class="mc-val" id="mb-aov">$71.94</div>
-          <div class="mc-lbl">Avg. Order</div>
+          <div class="mc-val" id="mb-products">—</div>
+          <div class="mc-lbl">Products</div>
         </div>
         <div class="metric-cell">
-          <div class="mc-val" id="mb-customers">142</div>
-          <div class="mc-lbl">Repeat Buyers</div>
+          <div class="mc-val" id="mb-lowstock">—</div>
+          <div class="mc-lbl">Low Stock</div>
+        </div>
+        <div class="metric-cell">
+          <div class="mc-val" id="mb-customers">—</div>
+          <div class="mc-lbl">Customers · 30d</div>
         </div>
       </div>
 
-      <!-- Command Input -->
-      <div id="command-area">
-        <div class="input-wrap">
-          <input type="text" id="query-input"
-            value="Give me a business health check and growth strategy for this week."
-            onkeydown="if(event.key==='Enter' && !this.disabled) runQuery()">
-          <button id="run-btn" onclick="runQuery()">Run ⚡</button>
+      <!-- Chat Feed -->
+      <div id="chat-feed">
+        <!-- Welcome message -->
+        <div class="chat-welcome" id="chat-welcome">
+          <div class="chat-welcome-title">Ask me anything about your store</div>
+          <div class="chat-welcome-sub">I can answer questions about revenue, inventory, products, and customers — then generate campaigns when you're ready.</div>
+          <div class="chat-suggestions">
+            <button class="chat-suggest" onclick="sendSuggestion(this)">Where did the revenue come from?</button>
+            <button class="chat-suggest" onclick="sendSuggestion(this)">Which products are low on stock?</button>
+            <button class="chat-suggest" onclick="sendSuggestion(this)">Who are my best customers?</button>
+            <button class="chat-suggest" onclick="sendSuggestion(this)">Create campaigns for this week</button>
+          </div>
+          <div class="store-card" id="store-preview"></div>
         </div>
-        <div id="shopify-creds">
-          <input type="text"     id="s-domain" placeholder="your-store.myshopify.com">
-          <input type="password" id="s-token"  placeholder="Shopify Admin API token">
-        </div>
+        <!-- Messages appear here -->
+        <div id="chat-messages"></div>
+        <!-- Campaign cards -->
+        <div id="cards-feed" style="display:none; flex-direction:column; gap:12px;"></div>
       </div>
 
       <!-- Agent Stepper -->
       <div id="stepper"></div>
 
-      <!-- Feed -->
-      <div id="feed-inner">
-        <div id="welcome-state">
-          <div class="welcome-hero">
-            <h2>Your commerce intelligence, in one loop.</h2>
-            <p>MailIntel runs 5 AI agents in sequence — reads your Shopify signals, finds what's winning, then writes ready-to-approve campaigns across Email, Instagram, and TikTok.</p>
-            <div class="how-it-works">
-              <div class="step-chip"><div class="step-chip-dot" style="background:#FFE01B"></div>Orchestrator plans</div>
-              <div class="step-chip"><div class="step-chip-dot" style="background:#007C89"></div>Analyst reads signals</div>
-              <div class="step-chip"><div class="step-chip-dot" style="background:#EF5F33"></div>Strategist picks actions</div>
-              <div class="step-chip"><div class="step-chip-dot" style="background:#00A650"></div>Activation writes copy</div>
-              <div class="step-chip"><div class="step-chip-dot" style="background:#E47386"></div>Critic approves</div>
-            </div>
-          </div>
-
-          <div class="store-card" id="store-preview"></div>
-
-          <button class="demo-cta" onclick="runDemo()">
-            <div>
-              <div class="demo-cta-text">Run the intelligence loop →</div>
-              <div class="demo-cta-sub">"Give me a business health check and growth strategy for this week."</div>
-            </div>
-            <span class="demo-cta-arrow">⚡</span>
-          </button>
+      <!-- Chat Input (fixed at bottom) -->
+      <div id="command-area">
+        <div id="shopify-creds">
+          <input type="text"     id="s-domain" placeholder="your-store.myshopify.com">
+          <input type="password" id="s-token"  placeholder="Shopify Admin API token">
         </div>
-        <div id="cards-feed" style="display:none; flex-direction:column; gap:12px;"></div>
+        <div class="input-wrap">
+          <input type="text" id="query-input" placeholder="Ask about your store, or say 'create campaigns'…"
+            onkeydown="if(event.key==='Enter' && !this.disabled) runQuery()">
+          <button id="run-btn" onclick="runQuery()">Send</button>
+        </div>
       </div>
 
     </div>
@@ -1017,6 +1127,9 @@ Output only valid JSON.`
   let actionSeq       = 0;
   let pendingCount    = 0;
   let traceDelayMs    = 0;
+  let liveStoreName   = '';   // populated from fetchShopify()
+  let cachedStoreData  = null; // cached after first fetch — reused for chat answers
+  let _pendingConfirm  = null; // { query, orchData } — avoids JSON-in-HTML escaping issues
   const _copyStore    = {};
   const _criticScores = {};
 
@@ -1024,14 +1137,32 @@ Output only valid JSON.`
   // API KEY
   // ─────────────────────────────────────────────────────────────────
 
-  // DEV: key injected by dev-server.js from .env — __DEV_API_KEY__ replaced at serve time
+  // DEV: keys injected by dev-server.js from .env at serve time
   if (!sessionStorage.getItem('mi_api_key') && typeof __DEV_API_KEY__ !== 'undefined' && __DEV_API_KEY__) {
     sessionStorage.setItem('mi_api_key', __DEV_API_KEY__);
+  }
+
+  // Auto-inject Shopify credentials and switch to live mode
+  if (typeof __DEV_SHOPIFY_URL__ !== 'undefined' && __DEV_SHOPIFY_URL__ &&
+      typeof __DEV_SHOPIFY_TOKEN__ !== 'undefined' && __DEV_SHOPIFY_TOKEN__) {
+    sessionStorage.setItem('mi_shopify_url',   __DEV_SHOPIFY_URL__);
+    sessionStorage.setItem('mi_shopify_token', __DEV_SHOPIFY_TOKEN__);
   }
 
   function checkKey() {
     if (sessionStorage.getItem('mi_api_key')) {
       document.getElementById('api-overlay').style.display = 'none';
+    }
+    // Pre-fill Shopify inputs and activate live mode if creds are stored
+    const shopUrl   = sessionStorage.getItem('mi_shopify_url');
+    const shopToken = sessionStorage.getItem('mi_shopify_token');
+    if (shopUrl && shopToken) {
+      const domEl = document.getElementById('s-domain');
+      const tokEl = document.getElementById('s-token');
+      if (domEl) domEl.value = shopUrl.replace('https://', '');
+      if (tokEl) tokEl.value = shopToken;
+      // Auto-switch to live mode (don't render yet — renderStorePreview() called after checkKey())
+      if (dataMode === 'mock') toggleMode(false);
     }
   }
 
@@ -1052,10 +1183,11 @@ Output only valid JSON.`
   // DATA MODE
   // ─────────────────────────────────────────────────────────────────
 
-  function toggleMode() {
+  function toggleMode(refresh = true) {
     dataMode = dataMode === 'mock' ? 'live' : 'mock';
-    const btn    = document.getElementById('mode-btn');
-    const creds  = document.getElementById('shopify-creds');
+    cachedStoreData = null; // bust cache on mode switch
+    const btn   = document.getElementById('mode-btn');
+    const creds = document.getElementById('shopify-creds');
     if (dataMode === 'live') {
       btn.textContent = 'LIVE SHOPIFY';
       btn.classList.add('live');
@@ -1065,6 +1197,7 @@ Output only valid JSON.`
       btn.classList.remove('live');
       creds.classList.remove('show');
     }
+    if (refresh) renderStorePreview();
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -1231,28 +1364,85 @@ Output only valid JSON.`
     const cf = document.getElementById('cards-feed');
     cf.innerHTML = '';
     cf.style.display = 'none';
-    const ws = document.getElementById('welcome-state');
-    if (ws) ws.style.display = 'none';
   }
 
-  function renderStorePreview() {
-    const d = MOCK_SHOPIFY_DATA;
-    const trendClass = t => t === 'rising' ? 'trend-rising' : t === 'declining' ? 'trend-declining' : 'trend-stable';
-    const trendLabel = t => t === 'rising' ? `↑ ${d.top_products.find(p=>p.trend===t)?.change_pct||''}%` : t === 'declining' ? `↓ ${Math.abs(d.top_products.find(p=>p.trend===t)?.change_pct||0)}%` : 'Stable';
+  // Update header insight chips with live store data
+  function updateHeaderInsights(d) {
+    const rev  = document.getElementById('hdr-revenue');
+    const stk  = document.getElementById('hdr-stock');
+    const top  = document.getElementById('hdr-top');
+    if (!rev) return;
 
-    document.getElementById('store-preview').innerHTML = `
+    const revenue = d.summary?.total_revenue;
+    rev.textContent = revenue != null ? `$${Number(revenue).toLocaleString()} Revenue` : '— Revenue';
+    rev.className = 'hdr-chip' + (revenue != null ? ' loaded' : '');
+
+    const lowCount = (d.alerts || []).length;
+    stk.textContent = lowCount > 0 ? `${lowCount} Low Stock` : '0 Low Stock';
+    stk.className   = 'hdr-chip' + (lowCount > 0 ? ' alert' : ' loaded');
+
+    const topProduct = (d.top_products || [])[0];
+    top.textContent = topProduct ? topProduct.title.split(' ').slice(0,3).join(' ') : '— Top Product';
+    top.className   = 'hdr-chip' + (topProduct ? ' loaded' : '');
+  }
+
+  // Render store preview card and metrics bar from any data object (mock or live)
+  function renderStoreData(d) {
+    updateHeaderInsights(d);
+    const isLive = dataMode === 'live';
+    const trendClass = t => t === 'rising' ? 'trend-rising' : t === 'declining' ? 'trend-declining' : 'trend-stable';
+
+    // Update metrics bar
+    const rev = d.summary.total_revenue;
+    document.getElementById('mb-revenue').textContent = '$' + (typeof rev === 'number' ? rev.toLocaleString() : rev);
+    document.getElementById('mb-orders').textContent  = d.summary.orders ?? '—';
+
+    // Products count
+    const prodCount = (d.top_products || []).length;
+    const prodEl = document.getElementById('mb-products');
+    if (prodEl) prodEl.textContent = prodCount || '—';
+
+    // Low stock count — highlight if any
+    const lowCount = (d.alerts || []).length;
+    const lsEl = document.getElementById('mb-lowstock');
+    if (lsEl) {
+      lsEl.textContent = lowCount > 0 ? lowCount : '0';
+      lsEl.style.color = lowCount > 0 ? '#EF5F33' : 'inherit';
+    }
+
+    // Customers (total from segments)
+    const totalCust = (d.customer_segments?.repeat_buyers || 0)
+                    + (d.customer_segments?.lapsed_30d || 0)
+                    + (d.customer_segments?.new_this_week || 0);
+    document.getElementById('mb-customers').textContent = totalCust || '—';
+
+    const delta = document.getElementById('mb-rev-delta');
+    if (d.summary.revenue_change_pct !== null && d.summary.revenue_change_pct !== undefined) {
+      const pct = d.summary.revenue_change_pct;
+      delta.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+      delta.style.color = pct >= 0 ? 'var(--green)' : '#EF4444';
+    } else {
+      delta.textContent = '';
+    }
+
+    // Update store preview panel
+    const sp = document.getElementById('store-preview');
+    if (!sp) return;
+    sp.innerHTML = `
       <div class="store-card-hd">
         <div>
           <div class="store-name">${esc(d.store_name)}</div>
           <div class="store-period">${esc(d.period)}</div>
         </div>
-        <span class="store-mock-badge">MOCK DATA</span>
+        <span class="store-mock-badge" style="${isLive ? 'background:#D1FAE5;color:#065F46' : ''}">${isLive ? 'LIVE' : 'MOCK DATA'}</span>
       </div>
       <div class="store-metrics">
         <div class="store-metric">
-          <div class="metric-val">$${d.summary.total_revenue.toLocaleString()}</div>
+          <div class="metric-val">$${(typeof d.summary.total_revenue === 'number' ? d.summary.total_revenue.toLocaleString() : d.summary.total_revenue)}</div>
           <div class="metric-lbl">Revenue</div>
-          <div class="metric-delta">+${d.summary.revenue_change_pct}%</div>
+          ${d.summary.revenue_change_pct !== null && d.summary.revenue_change_pct !== undefined
+            ? `<div class="metric-delta" style="color:${d.summary.revenue_change_pct >= 0 ? 'var(--green)' : '#EF4444'}">${d.summary.revenue_change_pct >= 0 ? '+' : ''}${d.summary.revenue_change_pct}%</div>`
+            : ''}
         </div>
         <div class="store-metric">
           <div class="metric-val">${d.summary.orders}</div>
@@ -1264,28 +1454,46 @@ Output only valid JSON.`
         </div>
         <div class="store-metric">
           <div class="metric-val">${d.customer_segments.repeat_buyers}</div>
-          <div class="metric-lbl">Repeat buyers</div>
+          <div class="metric-lbl">Repeat Buyers</div>
         </div>
       </div>
+      ${d.top_products && d.top_products.length ? `
       <div class="store-products">
         <div class="store-products-lbl">Top Products</div>
         ${d.top_products.map(p => `
           <div class="product-row">
             <span class="product-name">${esc(p.title)}</span>
-            <span class="product-trend ${trendClass(p.trend)}">${p.trend === 'rising' ? '↑' : p.trend === 'declining' ? '↓' : '→'} ${p.change_pct > 0 ? '+' : ''}${p.change_pct}%</span>
+            <span class="product-trend ${trendClass(p.trend)}">${p.trend === 'rising' ? '↑' : p.trend === 'declining' ? '↓' : '→'} ${p.units_sold > 0 ? p.units_sold + ' sold' : 'No sales'}</span>
           </div>`).join('')}
-      </div>
-      ${d.alerts.map(a => `
+      </div>` : ''}
+      ${d.alerts && d.alerts.length ? d.alerts.map(a => `
         <div class="alert-row">
           <div class="alert-dot"></div>
-          <span class="alert-text"><strong>${esc(a.urgency === 'high' ? '⚠ High urgency' : 'Opportunity')}:</strong> ${esc(a.product)}</span>
-        </div>`).join('')}`;
+          <span class="alert-text"><strong>Low stock:</strong> ${esc(a.message || a.product || '')}</span>
+        </div>`).join('') : ''}`;
+  }
+
+  async function renderStorePreview() {
+    if (dataMode === 'live') {
+      const sp = document.getElementById('store-preview');
+      if (sp) sp.innerHTML = `<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--subtle)">Loading live data…</div>`;
+      try {
+        const liveData = await fetchShopify();
+        cachedStoreData = liveData; // cache for chat answers
+        renderStoreData(liveData);
+      } catch (e) {
+        if (sp) sp.innerHTML = `<div style="padding:16px;font-family:var(--mono);font-size:11px;color:#EF4444">Failed to load Shopify data: ${esc(e.message)}</div>`;
+      }
+    } else {
+      cachedStoreData = MOCK_SHOPIFY_DATA; // cache mock too
+      renderStoreData(MOCK_SHOPIFY_DATA);
+    }
   }
 
   function runDemo() {
     const q = 'Give me a business health check and growth strategy for this week.';
     document.getElementById('query-input').value = q;
-    runAgentLoop(q);
+    runQuery();
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -1312,7 +1520,8 @@ Output only valid JSON.`
 
     const title     = action?.type === 'email' ? 'Email Campaign' : 'Campaign';
     const rationale = esc(action?.rationale || '');
-    const storeInitials = (MOCK_SHOPIFY_DATA.store_name||'VS').split(' ').map(w=>w[0]).join('').slice(0,2);
+    const storeName = (dataMode === 'live' && liveStoreName) ? liveStoreName : MOCK_SHOPIFY_DATA.store_name;
+    const storeInitials = (storeName||'VS').split(' ').map(w=>w[0]).join('').slice(0,2);
     const score     = _criticScores[id];
     const scoreColor = score >= 8 ? '#00A650' : score >= 6 ? '#F59E0B' : '#EF4444';
     const scoreVerdict = score >= 8 ? '✓ APPROVED' : score >= 6 ? '~ REVISED' : '✗ FLAGGED';
@@ -1450,7 +1659,7 @@ Output only valid JSON.`
               <div class="chrome-dot" style="background:#28C840"></div>
             </div>
             <div class="email-header">
-              <div class="email-from">From: ${esc(MOCK_SHOPIFY_DATA.store_name)} &lt;hello@verdantsupply.co&gt;</div>
+              <div class="email-from">From: ${esc(dataMode === 'live' && liveStoreName ? liveStoreName : MOCK_SHOPIFY_DATA.store_name)} &lt;hello@${(dataMode === 'live' && liveStoreName ? liveStoreName : MOCK_SHOPIFY_DATA.store_name).toLowerCase().replace(/\s/g,'')}.co&gt;</div>
               <div class="email-subject">${esc(e.subject || 'Subject line')}</div>
               <div class="email-preview-text">${esc(e.preview_text || '')}</div>
             </div>
@@ -1458,7 +1667,7 @@ Output only valid JSON.`
               ${paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}
               <div class="email-cta-btn">${esc(e.cta || 'Shop Now')}</div>
             </div>
-            <div class="email-footer">Verdant Supply Co. · Unsubscribe</div>
+            <div class="email-footer">${esc(dataMode === 'live' && liveStoreName ? liveStoreName : MOCK_SHOPIFY_DATA.store_name)} · Unsubscribe</div>
           </div>
         </div>
 
@@ -1776,10 +1985,7 @@ Output only valid JSON.`
   }
 
   function showErr(msg) {
-    const div = document.createElement('div');
-    div.className = 'err-card';
-    div.textContent = msg;
-    document.getElementById('cards-feed').appendChild(div);
+    appendChatMessage('ai', `<span style="color:#EF4444">⚠ ${esc(msg)}</span>`);
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -1788,9 +1994,13 @@ Output only valid JSON.`
 
   function parseJ(raw) {
     let s = raw.trim();
-    if (s.startsWith('```')) {
-      s = s.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim();
+    // Strip markdown fences
+    if (s.includes('```')) {
+      s = s.replace(/```(?:json)?\s*/g, '').replace(/```/g, '').trim();
     }
+    // Extract the first {...} block — handles preamble/postamble text from model
+    const match = s.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
     return JSON.parse(s);
   }
 
@@ -1798,11 +2008,27 @@ Output only valid JSON.`
   // API CALL
   // ─────────────────────────────────────────────────────────────────
 
-  async function callAgent(key, query, ctx) {
+  // Per-agent config: right model + tight token caps = low cost
+  const AGENT_CONFIG = {
+    ORCHESTRATOR: { model: 'claude-haiku-4-5-20251001', max_tokens: 120  }, // 3-field JSON only
+    ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 300  }, // structured signals
+    STRATEGY:     { model: 'claude-sonnet-4-6',         max_tokens: 400  }, // needs reasoning
+    COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 700  }, // 3-platform copy
+    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 250  }, // score + issues
+  };
+
+  // Cost per million tokens
+  const COST_PER_M_BY_MODEL = {
+    'claude-haiku-4-5-20251001': { input: 1.00, output: 5.00  },
+    'claude-sonnet-4-6':         { input: 3.00, output: 15.00 },
+  };
+
+  async function callAgent(key, userContent) {
     const apiKey = sessionStorage.getItem('mi_api_key');
     if (!apiKey) throw new Error('No API key — please refresh and enter your key.');
+    const { model, max_tokens } = AGENT_CONFIG[key];
 
-    addTrace(key, '→', `Analysing — ${JSON.stringify(ctx).slice(0, 80)}`);
+    addTrace(key, '→', userContent.slice(0, 80));
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1813,10 +2039,10 @@ Output only valid JSON.`
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        model,
+        max_tokens,
         system: AGENT_PROMPTS[key],
-        messages: [{ role: 'user', content: `User query: "${query}"\n\nContext:\n${JSON.stringify(ctx, null, 2)}` }]
+        messages: [{ role: 'user', content: userContent }]
       })
     });
 
@@ -1825,9 +2051,14 @@ Output only valid JSON.`
       throw new Error(err?.error?.message || `HTTP ${res.status}`);
     }
 
-    const data = await res.json();
-    const text = data.content[0].text;
-    updateCost(data.usage.input_tokens, data.usage.output_tokens);
+    const data  = await res.json();
+    const text  = data.content[0].text;
+    const costs = COST_PER_M_BY_MODEL[model] || COST_PER_M;
+    sessionCost += (data.usage.input_tokens  / 1_000_000 * costs.input)
+                 + (data.usage.output_tokens / 1_000_000 * costs.output);
+    const el = document.getElementById('cost-counter');
+    el.textContent = `$${sessionCost.toFixed(4)}`;
+    el.style.color = sessionCost > 0.50 ? '#FF4444' : sessionCost > 0.10 ? '#FF9900' : 'var(--brand)';
     addTrace(key, '←', text.slice(0, 120));
     return text;
   }
@@ -1837,125 +2068,385 @@ Output only valid JSON.`
   // ─────────────────────────────────────────────────────────────────
 
   async function fetchShopify() {
-    const domain = document.getElementById('s-domain').value.trim();
-    const token  = document.getElementById('s-token').value.trim();
-    if (!domain || !token) throw new Error('Shopify domain and token required for live mode.');
+    // Route all calls through the local dev-server proxy to avoid CORS blocks.
+    // The proxy forwards requests to Shopify Admin API with the token server-side.
+    const proxy = (apiPath) => `/shopify-proxy?path=${encodeURIComponent(apiPath)}`;
+    const now     = new Date();
+    const since7  = new Date(now - 7  * 864e5).toISOString();
+    const since14 = new Date(now - 14 * 864e5).toISOString();
+    const since30 = new Date(now - 30 * 864e5).toISOString();
 
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const [oRes, pRes] = await Promise.all([
-      fetch(`https://${domain}/admin/api/2026-01/orders.json?status=any&created_at_min=${since}`,
-        { headers: { 'X-Shopify-Access-Token': token } }),
-      fetch(`https://${domain}/admin/api/2026-01/products.json?limit=10`,
-        { headers: { 'X-Shopify-Access-Token': token } })
+    const [shopRes, ordersRes, prevRes, productsRes, customersRes] = await Promise.all([
+      fetch(proxy('shop.json')),
+      fetch(proxy(`orders.json?status=any&created_at_min=${since7}&limit=250`)),
+      fetch(proxy(`orders.json?status=any&created_at_min=${since14}&created_at_max=${since7}&limit=250`)),
+      fetch(proxy('products.json?limit=50')),
+      fetch(proxy(`customers.json?limit=250&created_at_min=${since30}`)),
     ]);
-    const { orders }   = await oRes.json();
-    const { products } = await pRes.json();
 
-    const revenue = orders.reduce((s, o) => s + parseFloat(o.total_price), 0);
+    const { shop }      = await shopRes.json();
+    const { orders }    = await ordersRes.json();
+    const { orders: prevOrders } = await prevRes.json();
+    const { products }  = await productsRes.json();
+    const { customers } = await customersRes.json();
+
+    // Revenue summary
+    const revenue     = orders.reduce((s, o) => s + parseFloat(o.total_price), 0);
+    const prevRevenue = prevOrders.reduce((s, o) => s + parseFloat(o.total_price), 0);
+    const revChange   = prevRevenue > 0 ? Math.round((revenue - prevRevenue) / prevRevenue * 1000) / 10 : null;
+
+    // Units sold per product from line items
+    const unitsByProduct = {};
+    const revByProduct   = {};
+    for (const o of orders) {
+      for (const li of (o.line_items || [])) {
+        unitsByProduct[li.product_id] = (unitsByProduct[li.product_id] || 0) + li.quantity;
+        revByProduct[li.product_id]   = (revByProduct[li.product_id]   || 0) + parseFloat(li.price) * li.quantity;
+      }
+    }
+
+    // Top products by units sold
+    const topProducts = products
+      .map(p => {
+        const inv = p.variants.reduce((s, v) => s + (v.inventory_quantity || 0), 0);
+        const sold = unitsByProduct[p.id] || 0;
+        const rev  = revByProduct[p.id]   || 0;
+        const daysLeft = sold > 0 ? Math.round(inv / (sold / 7)) : 99;
+        return {
+          id: p.id, title: p.title,
+          sku: p.variants[0]?.sku || '',
+          units_sold: sold,
+          revenue: Math.round(rev * 100) / 100,
+          inventory: inv,
+          trend: sold > 5 ? 'rising' : sold > 0 ? 'stable' : 'slow',
+          change_pct: null,
+          insight: inv < 10 && sold > 0
+            ? `Low stock — ${inv} left, ~${daysLeft} days at current velocity`
+            : `${sold} units sold this week — ${inv} in stock`
+        };
+      })
+      .sort((a, b) => b.units_sold - a.units_sold)
+      .slice(0, 5);
+
+    // Low-stock alerts
+    const alerts = products
+      .flatMap(p => p.variants.map(v => ({ product: p.title, sku: v.sku, inventory: v.inventory_quantity || 0 })))
+      .filter(v => v.inventory < 10 && v.inventory >= 0)
+      .slice(0, 3)
+      .map(v => ({ type: 'low_stock', message: `${v.product} (${v.sku || 'no SKU'}) — only ${v.inventory} left` }));
+
+    // Customer segments
+    const weekAgo  = new Date(now - 7 * 864e5);
+    const newThisWeek  = customers.filter(c => new Date(c.created_at) > weekAgo).length;
+    const repeatBuyers = customers.filter(c => c.orders_count > 1).length;
+    const lapsed30d    = customers.filter(c => {
+      const last = c.last_order_id ? new Date(c.updated_at) : null;
+      return last && (now - last) > 30 * 864e5;
+    }).length;
+
+    liveStoreName = shop.name;
     return {
-      store_name: 'Your Store',
+      store_name: shop.name,
       period: 'Last 7 days',
-      currency: orders[0]?.currency || 'USD',
+      currency: shop.currency,
       summary: {
         total_revenue: Math.round(revenue * 100) / 100,
         orders: orders.length,
         avg_order_value: orders.length ? Math.round(revenue / orders.length * 100) / 100 : 0,
-        revenue_change_pct: null
+        revenue_change_pct: revChange
       },
-      top_products: products.slice(0, 5).map(p => ({
-        id: p.id, title: p.title,
-        sku: p.variants[0]?.sku || '',
-        inventory: p.variants.reduce((s, v) => s + (v.inventory_quantity || 0), 0),
-        trend: 'unknown', change_pct: null,
-        insight: `${p.title} — ${p.variants.length} variant(s)`
-      })),
-      alerts: [],
-      customer_segments: { repeat_buyers: 0, lapsed_30d: 0, new_this_week: 0 }
+      top_products: topProducts,
+      alerts,
+      customer_segments: {
+        repeat_buyers: repeatBuyers,
+        lapsed_30d: lapsed30d,
+        new_this_week: newThisWeek
+      }
     };
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CHAT INTERFACE
+  // ─────────────────────────────────────────────────────────────────
+
+  const CAMPAIGN_KEYWORDS = ['campaign','campaigns','create','launch','write','generate',
+    'email','instagram','tiktok','promote','marketing','post','ad','ads','send','draft'];
+
+  function isCampaignIntent(q) {
+    const lower = q.toLowerCase();
+    return CAMPAIGN_KEYWORDS.some(kw => {
+      const idx = lower.indexOf(kw);
+      if (idx === -1) return false;
+      // Avoid "post office", "send money" type false positives — require commerce context nearby
+      return true;
+    });
+  }
+
+  function appendChatMessage(role, html) {
+    // Hide welcome state on first message
+    const welcome = document.getElementById('chat-welcome');
+    if (welcome && welcome.style.display !== 'none') welcome.style.display = 'none';
+
+    const msgs = document.getElementById('chat-messages');
+    const wrap = document.createElement('div');
+    wrap.className = `chat-msg chat-msg-${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble chat-bubble-${role}`;
+    bubble.innerHTML = html;
+    wrap.appendChild(bubble);
+    msgs.appendChild(wrap);
+    // Scroll to bottom
+    const feed = document.getElementById('chat-feed');
+    requestAnimationFrame(() => { feed.scrollTop = feed.scrollHeight; });
+    return bubble;
+  }
+
+  function showTypingIndicator() {
+    const msgs = document.getElementById('chat-messages');
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg chat-msg-ai';
+    wrap.id = 'typing-indicator';
+    wrap.innerHTML = `<div class="chat-typing"><span></span><span></span><span></span></div>`;
+    msgs.appendChild(wrap);
+    const feed = document.getElementById('chat-feed');
+    requestAnimationFrame(() => { feed.scrollTop = feed.scrollHeight; });
+  }
+
+  function hideTypingIndicator() {
+    document.getElementById('typing-indicator')?.remove();
+  }
+
+  function sendSuggestion(btn) {
+    document.getElementById('query-input').value = btn.textContent;
+    runQuery();
+  }
+
+  function sendCampaignIntent() {
+    document.getElementById('query-input').value = 'Create campaigns for this week';
+    runQuery();
+  }
+
+  async function answerChat(query) {
+    const apiKey = sessionStorage.getItem('mi_api_key');
+    if (!apiKey) throw new Error('No API key — please refresh and enter your key.');
+
+    // Use cached store data if available; otherwise fetch
+    if (!cachedStoreData) {
+      cachedStoreData = dataMode === 'mock' ? MOCK_SHOPIFY_DATA : await fetchShopify();
+    }
+    const d = cachedStoreData;
+
+    const ctx = `Store: ${d.store_name}
+Revenue 7d: $${d.summary.total_revenue} (${d.summary.orders} orders, AOV $${d.summary.avg_order_value})
+Change vs prior 7d: ${d.summary.revenue_change_pct != null ? d.summary.revenue_change_pct + '%' : 'n/a'}
+Top products: ${(d.top_products||[]).slice(0,5).map(p=>`${p.title} [sold:${p.units_sold}, inv:${p.inventory}, rev:$${p.revenue}]`).join(' | ')}
+Low-stock alerts: ${(d.alerts||[]).map(a=>a.message||a.product).join('; ') || 'none'}
+Customers: repeat=${d.customer_segments.repeat_buyers} lapsed30d=${d.customer_segments.lapsed_30d} newThisWeek=${d.customer_segments.new_this_week}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 280,
+        system: `You are MailIntel, a friendly commerce intelligence assistant embedded in a store dashboard.
+Answer questions about the store data concisely (2-4 sentences max).
+Use specific numbers from the data. Be warm and direct — like a trusted advisor, not a report generator.
+Never say "based on your data" — say "We've identified" or "Looking at the numbers" or just state the fact directly.
+Never say "Mailchimp". Format responses with <strong> for key numbers. Keep it short.`,
+        messages: [{ role: 'user', content: `Store data:\n${ctx}\n\nQuestion: ${query}` }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data  = await res.json();
+    const costs = COST_PER_M_BY_MODEL['claude-haiku-4-5-20251001'];
+    sessionCost += (data.usage.input_tokens  / 1_000_000 * costs.input)
+                 + (data.usage.output_tokens / 1_000_000 * costs.output);
+    const el = document.getElementById('cost-counter');
+    el.textContent = `$${sessionCost.toFixed(4)}`;
+    el.style.color = sessionCost > 0.50 ? '#FF4444' : sessionCost > 0.10 ? '#FF9900' : 'var(--brand)';
+
+    return data.content[0].text;
   }
 
   // ─────────────────────────────────────────────────────────────────
   // MAIN AGENT LOOP
   // ─────────────────────────────────────────────────────────────────
 
-  async function runAgentLoop(query) {
+  // ── runQuery: detects intent → chat answer or campaign pipeline ───
+  async function runQuery() {
+    const input = document.getElementById('query-input');
+    const q = input.value.trim();
+    if (!q) return;
+
+    input.value = '';
+    appendChatMessage('user', esc(q));
+
+    if (isCampaignIntent(q)) {
+      // Campaign path: Orchestrator → confirm card → full loop
+      setUI('running');
+      showTypingIndicator();
+      clearRail();
+      clearTrace();
+      initStepper();
+
+      try {
+        stepState('ORCHESTRATOR', 'active');
+        const orchRaw  = await callAgent('ORCHESTRATOR', `Query: "${q}"`);
+        const orchData = parseJ(orchRaw);
+        stepState('ORCHESTRATOR', 'done');
+        hideTypingIndicator();
+        addTraceSep();
+
+        showConfirmCard(q, orchData);
+      } catch (err) {
+        console.error(err);
+        hideTypingIndicator();
+        showErr('We hit a snag — ' + (err.message || ''));
+        setUI('idle');
+      }
+
+    } else {
+      // Chat path: direct Haiku answer from store data
+      setUI('running');
+      showTypingIndicator();
+
+      try {
+        const answer = await answerChat(q);
+        hideTypingIndicator();
+
+        // Offer campaign CTA if answer surfaces an opportunity
+        const triggersCampaign = /opportunit|low stock|campaign|reorder|lapsed|best customer/i.test(answer);
+        const html = answer
+          + (triggersCampaign
+              ? `<br><button class="chat-campaign-btn" onclick="sendCampaignIntent()">Create campaigns →</button>`
+              : '');
+        appendChatMessage('ai', html);
+      } catch (err) {
+        console.error(err);
+        hideTypingIndicator();
+        showErr('We hit a snag — ' + (err.message || ''));
+      }
+
+      setUI('idle');
+    }
+  }
+
+  function showConfirmCard(query, orchData) {
+    setUI('idle');
+    _pendingConfirm = { query, orchData };
+    const html = `
+      <div style="margin-bottom:8px"><strong>Ready to run the intelligence loop</strong></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--teal);background:rgba(0,124,137,0.08);padding:8px 10px;border-radius:6px;border-left:3px solid var(--teal);margin-bottom:10px">
+        Focus: ${esc(orchData.focus || query)}
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+        Signal Analyst → Strategist → Activation → Critic<br>
+        Writes campaigns across Email, Instagram &amp; TikTok.
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="confirm-btn-primary" onclick="acceptConfirm()">Run all agents ⚡</button>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--subtle)">~$0.015 · 4 agents</span>
+      </div>`;
+    appendChatMessage('ai', html);
+  }
+
+  function acceptConfirm() {
+    if (!_pendingConfirm) return;
+    const { query, orchData } = _pendingConfirm;
+    _pendingConfirm = null;
+    runFullLoop(query, orchData);
+  }
+
+  // ── STAGE 2: Full loop — triggered after user confirms ────────────
+  async function runFullLoop(query, orchData) {
     setUI('running');
-    clearFeed();
-    clearRail();
     clearTrace();
-    initStepper();
 
     try {
-      // ── 1. Orchestrator ──────────────────────────────────────────
-      stepState('ORCHESTRATOR', 'active');
-      const orchRaw  = await callAgent('ORCHESTRATOR', query, {});
-      const orchData = parseJ(orchRaw);
-      stepState('ORCHESTRATOR', 'done');
-      addTraceSep();
-
-      // ── 2. Signal Analyst ────────────────────────────────────────
+      // Use cached store data if available — avoids double-fetch
       stepState('ANALYST', 'active');
-      const shopCtx = dataMode === 'mock' ? MOCK_SHOPIFY_DATA : await fetchShopify();
-      const analRaw  = await callAgent('ANALYST', query, { shopify: shopCtx, focus: orchData.focus });
+      const shopCtx = cachedStoreData || (dataMode === 'mock' ? MOCK_SHOPIFY_DATA : await fetchShopify());
+      if (!cachedStoreData) cachedStoreData = shopCtx;
+
+      // Compress: only send what Analyst needs (no full JSON — pick key fields)
+      const shopSummary = `Store: ${shopCtx.store_name}
+Revenue 7d: $${shopCtx.summary.total_revenue} (${shopCtx.summary.orders} orders, AOV $${shopCtx.summary.avg_order_value})
+Top products: ${(shopCtx.top_products||[]).slice(0,5).map(p=>`${p.title} [inv:${p.inventory}, sold:${p.units_sold||0}]`).join(', ')}
+Alerts: ${(shopCtx.alerts||[]).map(a=>a.message||a.product).join('; ') || 'none'}
+Segments: repeat=${shopCtx.customer_segments.repeat_buyers} lapsed=${shopCtx.customer_segments.lapsed_30d} new=${shopCtx.customer_segments.new_this_week}`;
+
+      const analRaw  = await callAgent('ANALYST', `Focus: ${orchData.focus}\n\n${shopSummary}`);
       const analData = parseJ(analRaw);
       renderCard('ANALYST', analData);
       stepState('ANALYST', 'done');
       addTraceSep();
 
-      // ── 3. Strategist ─────────────────────────────────────────────
+      // Strategist — only signals, no raw Shopify data
       stepState('STRATEGY', 'active');
-      const stratRaw  = await callAgent('STRATEGY', query, { signals: analData, priority: orchData.priority });
+      const stratPrompt = `Priority: ${orchData.priority}
+Win: ${analData.win?.product} — ${analData.win?.insight}
+Opportunity: ${analData.opportunity?.product} — ${analData.opportunity?.insight} (upsell: ${analData.opportunity?.upsell_angle})`;
+      const stratRaw  = await callAgent('STRATEGY', stratPrompt);
       const stratData = parseJ(stratRaw);
       renderCard('STRATEGY', stratData);
       stepState('STRATEGY', 'done');
       addTraceSep();
 
-      // ── 4 + 5. Activation + Critic per action ────────────────────
+      // Activation + Critic per action
       const actions = stratData.actions || [];
       for (let i = 0; i < actions.length; i++) {
         const action = actions[i];
-
-        // Reset pills for each pass if not first
-        if (i > 0) {
-          stepState('COPY',   'pending');
-          stepState('CRITIC', 'pending');
-        }
+        if (i > 0) { stepState('COPY', 'pending'); stepState('CRITIC', 'pending'); }
 
         stepState('COPY', 'active');
-        const copyRaw  = await callAgent('COPY', query, { action, store_name: shopCtx.store_name });
+        // Compressed copy prompt — only what Activation needs
+        const copyPrompt = `Store: ${shopCtx.store_name}
+Action: ${action.type} | Trigger: ${action.trigger}
+Rationale: ${action.rationale}
+Urgency: ${action.urgency}`;
+        const copyRaw  = await callAgent('COPY', copyPrompt);
         const copyData = parseJ(copyRaw);
         stepState('COPY', 'done');
         addTraceSep();
 
         stepState('CRITIC', 'active');
-        const critRaw  = await callAgent('CRITIC', query, { draft: copyData, action });
+        // Critic only needs email subject+body, not all 3 platforms
+        const critPrompt = `Action: ${action.rationale}
+Email subject: ${copyData.email?.subject}
+Email body: ${copyData.email?.body?.slice(0,300)}
+Instagram caption: ${copyData.instagram?.caption}`;
+        const critRaw  = await callAgent('CRITIC', critPrompt);
         const critData = parseJ(critRaw);
         stepState('CRITIC', 'done');
         addTraceSep();
 
         const finalCopy = (critData.approved !== false || !critData.revised_copy)
-          ? copyData
-          : critData.revised_copy;
-
+          ? copyData : critData.revised_copy;
         if (finalCopy) addAction(finalCopy, action, critData.score);
       }
 
+      // Summary bubble
+      const campaignCount = (stratData.actions || []).length;
+      appendChatMessage('ai',
+        `<strong>${campaignCount} campaign${campaignCount > 1 ? 's' : ''} ready.</strong> Review below — edit copy, select audience, then launch. ✓ All passed Critic review.`);
+
     } catch (err) {
       console.error(err);
-      showErr('We hit a snag — check your API key and try again. ' + (err.message || ''));
+      showErr('We hit a snag — ' + (err.message || ''));
     }
 
     setUI('idle');
-  }
-
-  // ─────────────────────────────────────────────────────────────────
-  // ENTRY POINT
-  // ─────────────────────────────────────────────────────────────────
-
-  function runQuery() {
-    const q = document.getElementById('query-input').value.trim();
-    if (!q) return;
-    runAgentLoop(q);
   }
 
   function esc(s) {

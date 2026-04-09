@@ -202,6 +202,36 @@ function updateCost(inputTokens, outputTokens) {
 
 ---
 
+## MCP Efficiency Rules
+
+When calling any MCP tool (Shopify or otherwise), follow these rules to minimize token usage on tool responses:
+
+### Tool Call Protocol
+
+1. **Use `get_sales_summary` instead of `get_orders`** when you only need revenue/count totals — it returns ~5 fields vs. 250 full order objects
+2. **Always pass `fields`** — e.g. `fields: "title,inventory"` instead of receiving full product objects
+3. **Always set `limit`** — default to 10 for exploration, only go higher when a count is specifically needed
+4. **Scope with `created_at_min`** — never fetch all-time data; default to last 7 days for orders
+5. **One tool call per intent** — don't call `get_products` AND `get_inventory` for the same question; `get_inventory` already contains product+variant+stock
+
+### Preferred Call Patterns
+
+| Need | Use | Fields | Limit |
+|------|-----|--------|-------|
+| Revenue this week | `get_sales_summary` | `order_count,total_revenue` | — |
+| Low-stock alert | `get_inventory` | `product,inventory` | 20 |
+| Top products | `get_products` | `title,variants.inventory` | 10 |
+| New customers | `get_customers` | `name,orders_count,created_at` | 20 |
+| Store currency/name | `get_shop_info` | `name,currency` | — |
+
+### What NOT to Do
+
+- Never call `get_orders` with `limit: 250` to compute revenue — use `get_sales_summary`
+- Never call `get_products` without `fields` when you only need inventory
+- Never call more than 2 MCP tools per turn unless explicitly required
+
+---
+
 ## Claude Skills
 
 Three project-level skills are registered and should be invoked for these tasks:
