@@ -313,17 +313,7 @@
     #run-btn:hover    { opacity: 0.88; transform: scale(1.02); }
     #run-btn:active   { transform: scale(0.98); }
     #run-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-    #shopify-creds {
-      display: none; gap: 8px; margin-top: 10px; padding: 12px;
-      background: rgba(0,0,0,0.03); border-radius: var(--r-md);
-      border: 1px solid var(--border);
-    }
-    #shopify-creds.show { display: flex; }
-    #shopify-creds input {
-      flex: 1; font-family: var(--mono); font-size: 12px; padding: 8px 10px;
-      border: 1px solid var(--border-md); border-radius: var(--r-sm); outline: none;
-      background: var(--card);
-    }
+    #shopify-creds { display: none !important; } /* credentials injected server-side — never shown in UI */
 
     /* ── STEPPER ────────────────────────────────────────────────── */
     #stepper {
@@ -2127,7 +2117,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   // Per-agent config: right model + tight token caps = low cost
   const AGENT_CONFIG = {
     ORCHESTRATOR: { model: 'claude-haiku-4-5-20251001', max_tokens: 120  }, // 3-field JSON only
-    ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 300  }, // structured signals
+    ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 500  }, // structured signals — needs room for full JSON
     STRATEGY:     { model: 'claude-sonnet-4-6',         max_tokens: 400  }, // needs reasoning
     COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 700  }, // 3-platform copy
     CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 400  }, // sequential reasoning needs more room // score + issues
@@ -2562,6 +2552,9 @@ Segments: repeat=${shopCtx.customer_segments.repeat_buyers} lapsed=${shopCtx.cus
 
       const analRaw  = await callAgent('ANALYST', `Focus: ${orchData.focus}\n\n${shopSummary}`);
       const analData = parseJ(analRaw);
+      if (!analData?.win || !analData?.opportunity) {
+        throw new Error('Signal Analyst returned incomplete data — try running again.');
+      }
       renderCard('ANALYST', analData);
       stepState('ANALYST', 'done');
       addTraceSep();
@@ -2616,10 +2609,11 @@ TikTok hook: ${copyData.tiktok?.hook}`;
         if (finalCopy) addAction(finalCopy, action, critData.score, trendResults);
       }
 
-      // Summary bubble
-      const campaignCount = (stratData.actions || []).length;
-      appendChatMessage('ai',
-        `<strong>${campaignCount} campaign${campaignCount > 1 ? 's' : ''} ready.</strong> Review below — edit copy, select audience, then launch. ✓ All passed Critic review.`);
+      // Summary bubble — only if campaigns were actually created
+      if (actionSeq > 0) {
+        appendChatMessage('ai',
+          `<strong>${actionSeq} campaign${actionSeq > 1 ? 's' : ''} ready.</strong> Review below — edit copy, select audience, then launch. ✓ All passed Critic review.`);
+      }
 
     } catch (err) {
       console.error(err);
