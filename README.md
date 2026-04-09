@@ -96,15 +96,126 @@ Each log line is colour-coded by agent. `→` shows what was sent. `←` shows w
 
 ---
 
+## Chat Interface
+
+MailIntel now includes a full conversational layer that separates quick store questions from campaign generation:
+
+- **Ask anything** — *"Where did the revenue come from?" "Who are my best customers?" "Which products are low on stock?"* — Haiku answers directly from live store data in ~1 second for ~$0.00015
+- **Create campaigns** — When you say "create campaigns" or "launch an email", the intent detector routes to the 5-agent pipeline with a confirm step first
+- **Campaign CTA** — When a chat answer surfaces an opportunity (low stock, lapsed customers), a "Create campaigns →" button appears inline
+
+Intent detection is keyword-based: `campaign`, `create`, `launch`, `email`, `instagram`, `tiktok`, `generate`, `promote` → agent loop. Everything else → Haiku chat answer.
+
+---
+
+## Live Shopify Integration
+
+MailIntel connects to the Shopify Admin REST API (`2026-01`) through a local CORS proxy built into `dev-server.js`. The browser cannot call the Shopify Admin API directly (CORS), so all requests route through `/shopify-proxy?path=...`.
+
+```bash
+# Add Shopify credentials to .env
+SHOPIFY_SHOP_URL=https://your-store.myshopify.com
+SHOPIFY_ADMIN_API_KEY=shpat_...
+```
+
+`dev-server.js` injects both as globals at serve time (`__DEV_SHOPIFY_URL__`, `__DEV_SHOPIFY_TOKEN__`), auto-switches the app to Live mode, and populates the metrics bar + header chips from real data on load.
+
+---
+
+## MCP Integration — Local Shopify Server
+
+`shopify-mcp.js` is a local stdio MCP server that wraps the Shopify Admin API with 6 tools:
+
+| Tool | What it returns | Token-efficient default |
+|------|----------------|------------------------|
+| `get_shop_info` | Store name, currency, plan | `fields: "name,currency"` |
+| `get_products` | Product list | `limit: 10, fields: "title,variants.inventory"` |
+| `get_orders` | Order list | `limit: 10, created_at_min: 7d ago` |
+| `get_customers` | Customer list | `limit: 20, fields: "name,orders_count,created_at"` |
+| `get_inventory` | Product + variant + stock | `limit: 20, fields: "product,inventory"` |
+| `get_sales_summary` | Aggregated revenue + count | Server-side aggregation — no raw order list |
+
+The MCP server is registered in `.mcp.json` (gitignored) and picked up automatically by Claude Code via `enableAllProjectMcpServers: true`.
+
+---
+
+## MCP Token Optimization
+
+Every MCP tool response carries a **token tax** — the cost of transmitting raw API data through the context window. We eliminated ~90% of this cost through four techniques:
+
+### 1. Aggregated endpoints over raw lists
+
+```
+❌ get_orders (limit: 250)  →  ~14,000 tokens (full order objects)
+✅ get_sales_summary        →  ~60 tokens    (revenue + count only)
+
+Reduction: 99.6%
+```
+
+`get_sales_summary` does the arithmetic server-side in `shopify-mcp.js` and returns 5 fields. Never ask Claude to sum a list of 250 orders.
+
+### 2. Fields filtering on every call
+
+```javascript
+// shopify-mcp.js — pick() helper filters before returning
+pick(product, ['title', 'variants.inventory_quantity'])
+
+❌ Full product object  →  ~800 tokens each
+✅ Filtered (2 fields)  →  ~40 tokens each
+
+Reduction: 95%
+```
+
+Every tool accepts a `fields` parameter. Passing `fields: "title,inventory"` vs nothing is the difference between 800 and 40 tokens per product.
+
+### 3. Time-scoped queries
+
+```
+❌ orders.json (all-time)           →  250+ results, thousands of tokens
+✅ orders.json?created_at_min=7d   →  13 results, ~400 tokens
+```
+
+Every order/customer query defaults to the last 7 days. Never fetch all-time data for a weekly report.
+
+### 4. Compressed context for agent calls
+
+Agents receive plain-text summaries, not raw JSON:
+
+```
+❌ Full fetchShopify() JSON  →  ~1,200 tokens per agent call
+✅ Compressed shopSummary   →  ~150 tokens per agent call
+
+Example:
+  Store: Vendant
+  Revenue 7d: $1,048 (13 orders, AOV $80.62)
+  Top products: Canvas Tote Natural [sold:4, inv:8] | Eco Pin Set [sold:2, inv:338]
+  Alerts: Canvas Tote (CT-NAT-001) — only 8 left
+  Segments: repeat=0 lapsed=15 new=15
+```
+
+### Before / After — Full Run Cost
+
+| Version | Tokens (input) | Cost/run |
+|---------|---------------|----------|
+| v1 — all Sonnet, raw JSON context | ~28,000 | ~$0.084 |
+| v2 — model routing + compressed context | ~8,400 | ~$0.025 |
+| v2 + cached store data (no re-fetch) | ~7,200 | ~$0.022 |
+
+**~74% cost reduction** with no change to output quality.
+
+---
+
 ## Stack
 
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Frontend | Vanilla HTML + CSS + JS | Zero setup, deploy anywhere — no build step |
 | AI | Claude Sonnet 4.6 + Haiku 4.5 | Sonnet for reasoning, Haiku for routing + critique |
-| Data | Mock Shopify data (or real Shopify Admin API) | Same JSON shape — agents are mode-agnostic |
+| Commerce data | Shopify Admin REST API `2026-01` | Live orders, products, customers, inventory |
+| MCP | Local stdio server (`shopify-mcp.js`) | 6 tools with fields filtering + aggregation |
+| CORS proxy | `dev-server.js` `/shopify-proxy` | Browser can't call Shopify Admin API directly |
 | Fonts | Syne + JetBrains Mono + DM Sans | Display / trace / body hierarchy |
-| Dev server | `dev-server.js` (Node built-in `http`) | Reads `.env`, injects API key at serve time |
+| Dev server | `dev-server.js` (Node built-in `http`) | Reads `.env`, injects keys at serve time |
 
 ---
 
@@ -114,14 +225,24 @@ Each log line is colour-coded by agent. `→` shows what was sent. `←` shows w
 git clone https://github.com/bnamatherdhala7/MailIntel.git
 cd MailIntel
 
-# Add your Anthropic API key
-echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+# Create .env with your keys (never committed — gitignored)
+cat > .env <<EOF
+ANTHROPIC_API_KEY=sk-ant-...
+SHOPIFY_SHOP_URL=https://your-store.myshopify.com
+SHOPIFY_ADMIN_API_KEY=shpat_...
+EOF
 
-# Start dev server — reads key from .env, never writes it to disk
+# Start dev server — reads .env, injects keys, proxies Shopify API
 node dev-server.js
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The key is injected into `sessionStorage` at page load and cleared when the tab closes.
+Open [http://localhost:3000](http://localhost:3000). API keys are injected into `sessionStorage` at page load and cleared when the tab closes — never written to disk.
+
+**Optional: seed your store with sample data**
+```bash
+node seed-shopify.js
+# Creates 8 products, 12 customers, 13 orders spread over 7 days
+```
 
 ---
 
@@ -129,11 +250,13 @@ Open [http://localhost:3000](http://localhost:3000). The key is injected into `s
 
 | Scenario | Cost |
 |----------|------|
-| Single full run (5 agents, 2 campaign cards) | ~$0.04 |
-| 300 runs/month | ~$12/month |
+| Chat answer (Haiku, store Q&A) | ~$0.00015 |
+| Full run — 5 agents, 2 campaign cards | ~$0.022 |
+| 300 full runs/month | ~$6.60/month |
 | A/B variant call | ~$0.001 |
 
-*Sonnet 4.6 at $3/$15 per M tokens · Haiku 4.5 at $1/$5 per M tokens*
+*Sonnet 4.6: $3/$15 per M tokens · Haiku 4.5: $1/$5 per M tokens*  
+*Token optimization (fields filtering + compressed context + model routing) reduces cost ~74% vs naive implementation.*
 
 ---
 

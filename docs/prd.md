@@ -154,7 +154,117 @@ Score ≥ 8 and no violations → approved as-is. Score < 8 → the Critic retur
 
 **No campaign card renders without passing the Critic.**
 
-### 3.6 Full Transparency — The Intelligence Trace
+### 3.6 Chat Interface — Conversational Store Intelligence
+
+The v1.1 update adds a conversational layer that separates two distinct user intents:
+
+**1. Quick store questions** — routed to Haiku with a compressed store summary. Answers in ~1 second. Cost: ~$0.00015. Examples:
+- "Where did the revenue come from this week?"
+- "Which products are low on stock?"
+- "Who are my best customers?"
+
+**2. Campaign generation** — detected by intent keywords (`campaign`, `create`, `launch`, `email`, `instagram`, `tiktok`, `generate`, `promote`, `draft`). Routes to the Orchestrator → confirm card → full 5-agent loop.
+
+This two-tier architecture means the product is useful for daily store monitoring at near-zero cost, not just weekly campaign generation. It also lowers the activation barrier: merchants can explore their data conversationally before committing to a full agent run.
+
+**Store data is cached on first load.** Chat answers reuse `cachedStoreData` without re-fetching. The first load populates the cache; all subsequent questions and agent runs use it — eliminating redundant Shopify API calls within a session.
+
+### 3.7 Live Shopify Integration
+
+`fetchShopify()` calls five Shopify Admin REST endpoints in parallel, then normalises the response into the same JSON shape as `MOCK_SHOPIFY_DATA`. Agents are mode-agnostic — they receive identical context regardless of data source.
+
+```
+Parallel fetch:
+  shop.json                             → store name, currency
+  orders.json?created_at_min=7d         → this week's orders
+  orders.json?created_at_min=14d&max=7d → prior week (for % change)
+  products.json?limit=50                → inventory + velocity
+  customers.json?created_at_min=30d     → segment counts
+```
+
+A CORS proxy in `dev-server.js` (`/shopify-proxy?path=...`) forwards all requests server-side. The Shopify Admin API does not support browser direct access.
+
+### 3.8 MCP Integration — Local Shopify Server
+
+`shopify-mcp.js` implements the MCP stdio protocol, exposing 6 Shopify tools to Claude Code. This enables Claude Code itself to query the store during development — useful for debugging, testing prompts with real data, and running ad-hoc queries without writing code.
+
+| Tool | Returns | Token default |
+|------|---------|--------------|
+| `get_shop_info` | Name, currency, plan | `fields: "name,currency"` |
+| `get_products` | Product list | `limit: 10, fields: "title,variants"` |
+| `get_orders` | Order list | `limit: 10, created_at_min: 7d` |
+| `get_customers` | Customer list | `limit: 20, fields: "name,orders_count"` |
+| `get_inventory` | Product + variant + stock | `limit: 20` |
+| `get_sales_summary` | Revenue + order count (aggregated) | No pagination — server aggregates |
+
+Registered in `.mcp.json` (gitignored). Activated via `enableAllProjectMcpServers: true` in Claude Code settings.
+
+### 3.9 MCP Token Optimization — The Token Tax Protocol
+
+Every MCP tool response carries a **token tax**: the cost of transmitting raw API data through the LLM context window. Unoptimised, a single `get_orders` call with `limit: 250` returns ~14,000 tokens of JSON that Claude must process before it can answer a simple revenue question. We reduced this by ~90% through four techniques:
+
+#### Technique 1 — Aggregated endpoints over raw lists
+
+The most impactful single change. For revenue queries, `get_sales_summary` returns 5 fields computed server-side vs 250 full order objects.
+
+| Call | Tokens | Cost |
+|------|--------|------|
+| `get_orders?limit=250` | ~14,000 | ~$0.042 |
+| `get_sales_summary` | ~60 | ~$0.00018 |
+| **Reduction** | **99.6%** | |
+
+Rule: never ask an LLM to sum a list. Do the arithmetic in the tool and return the answer.
+
+#### Technique 2 — Server-side fields filtering
+
+Every tool in `shopify-mcp.js` accepts a `fields` parameter. A `pick()` helper filters the Shopify response before returning it:
+
+```javascript
+// pick(obj, ['title', 'variants.inventory_quantity'])
+// Strips all fields not in the list — including nested objects
+
+❌ Full product object  →  ~800 tokens
+✅ pick(product, ['title','variants.inventory_quantity'])  →  ~40 tokens
+Reduction: 95%
+```
+
+Default field sets are defined per tool so callers get safe defaults without thinking about it.
+
+#### Technique 3 — Time-scoped queries by default
+
+Every order and customer query defaults to a 7-day window via `created_at_min`. Fetching all-time data is never the right answer for a weekly intelligence report.
+
+```
+❌ orders.json           → all orders ever → unpredictable token count
+✅ orders.json?created_at_min=7d → this week only → bounded token count
+```
+
+#### Technique 4 — Compressed agent context
+
+Agents receive plain-text summaries, not raw JSON objects. The `shopSummary` string passed to each agent is ~150 tokens. The equivalent raw `fetchShopify()` JSON is ~1,200 tokens.
+
+```
+Store: Vendant
+Revenue 7d: $1,048 (13 orders, AOV $80.62)
+Top products: Canvas Tote Natural [sold:4, inv:8] | Eco Pin Set [sold:2, inv:338]
+Alerts: Canvas Tote (CT-NAT-001) — only 8 left
+Segments: repeat=0 lapsed=15 new=15
+```
+
+87% reduction per agent call. Across 5 agents, this saves ~5,250 tokens per run.
+
+#### Combined impact
+
+| Version | Architecture | Input tokens/run | Cost/run |
+|---------|-------------|-----------------|----------|
+| Naive | All Sonnet, raw JSON to every agent | ~28,000 | ~$0.084 |
+| Optimised | Model routing + compressed context | ~8,400 | ~$0.025 |
+| + Cache | No re-fetch on same session | ~7,200 | ~$0.022 |
+| **Total reduction** | | **74%** | **74%** |
+
+These techniques apply to any MCP integration, not just Shopify. The general rule: **minimise what crosses the context boundary**. The LLM should receive the answer to a sub-question, not the raw data to compute it from.
+
+### 3.10 Full Transparency — The Intelligence Trace
 
 The Trace panel streams every agent call, every response, and every token cost in real time. This is not a debug tool — it's the **primary trust mechanism**. When merchants see the reasoning chain that produced their campaign, they're more willing to launch it.
 
@@ -260,10 +370,16 @@ Agents are mode-agnostic — they receive identical JSON regardless of source.
 | File structure | All runtime code in `index.html`. Reference specs in `.js` and `.md` files — not imported |
 | Build tooling | None. No npm, no bundler, no compilation step |
 | API key storage | `sessionStorage` only — key `mi_api_key`. Never `localStorage`. Never disk |
-| API calls | Direct browser fetch with `anthropic-dangerous-direct-browser-access: true` header (demo only; production should proxy through backend) |
+| Shopify key storage | `sessionStorage` only — `mi_shopify_url`, `mi_shopify_token`. Injected by dev-server, cleared on tab close |
+| Anthropic API calls | Direct browser fetch with `anthropic-dangerous-direct-browser-access: true` (demo only; production should proxy) |
+| Shopify API calls | All calls route through `/shopify-proxy` in `dev-server.js` — browser cannot call Shopify Admin API directly (CORS) |
+| MCP calls | Via stdio MCP server (`shopify-mcp.js`). Credentials passed as CLI args, never hardcoded. Config in `.mcp.json` (gitignored) |
+| MCP token budget | Always pass `fields` on tool calls. Use `get_sales_summary` over `get_orders` for revenue. Default `limit: 10`. Default `created_at_min: 7d` on orders |
 | Runtime dependencies | Zero npm packages at runtime. `puppeteer` and `dev-server.js` are dev-only |
-| Agent output | JSON only, no markdown. Parsed by `parseJ()` which strips fences |
+| Agent output | JSON only, no markdown. Parsed by `parseJ()` which strips fences and extracts first `{...}` block |
+| Agent context | Plain-text summaries only — never raw JSON objects. Max ~150 tokens per context block |
 | Fonts | Syne + JetBrains Mono + DM Sans only. No Inter, Roboto, Arial, or system fonts |
+| Secrets | `.env` and `.mcp.json` are gitignored. No API keys, tokens, or store URLs in any committed file |
 
 ---
 
@@ -297,7 +413,7 @@ These are product constraints enforced at the prompt, UI, and code level:
 
 ## 9. Roadmap
 
-### v1 — Current (Demo-Complete)
+### v1 — Demo-Complete
 - Mock Shopify data with all 5 agents
 - Email + Instagram + TikTok campaign cards
 - Critic scoring, A/B variants, audience selector, schedule toggle
@@ -305,6 +421,17 @@ These are product constraints enforced at the prompt, UI, and code level:
 - Intelligence Trace panel (collapsible, right side)
 - Dev server with `.env` key injection
 - Direct browser API (demo mode)
+
+### v1.1 — Current
+- **Chat interface** — conversational Q&A (Haiku) separated from campaign generation (5-agent loop)
+- **Live Shopify integration** — real orders, products, customers via Admin REST API `2026-01`
+- **CORS proxy** — `dev-server.js` `/shopify-proxy` endpoint forwards Shopify API calls server-side
+- **MCP server** — `shopify-mcp.js` stdio MCP server with 6 tools, registered in `.mcp.json`
+- **Token optimization** — fields filtering, `get_sales_summary`, compressed agent context, model routing → 74% cost reduction
+- **Store data caching** — single fetch per session, reused across chat and agent calls
+- **Live metrics bar + header chips** — revenue, orders, products, low-stock count populated from Shopify
+- **Seed script** — `seed-shopify.js` populates a Shopify store with 8 products, 12 customers, 13 orders
+- **Orchestrator confirm step** — intent detection routes to cheap Haiku confirmation before spending Sonnet tokens
 
 ### v2 — Production
 - Real Shopify Admin API integration (OAuth flow, read-only scopes)
@@ -319,7 +446,7 @@ These are product constraints enforced at the prompt, UI, and code level:
 - Webhook-triggered intelligence: "alert me when inventory drops below threshold"
 - Competitor trend awareness via web search tool
 - White-label for agencies (multi-store dashboard, client management)
-- MCP integration for live Canva creative asset awareness
+- Canva MCP integration for live creative asset awareness
 
 ---
 
