@@ -864,6 +864,7 @@
             <button class="chat-suggest" onclick="sendSuggestion(this)">Where did the revenue come from?</button>
             <button class="chat-suggest" onclick="sendSuggestion(this)">Which products are low on stock?</button>
             <button class="chat-suggest" onclick="sendSuggestion(this)">Who are my best customers?</button>
+            <button class="chat-suggest" onclick="sendSuggestion(this)">What are the market trends for my top products?</button>
             <button class="chat-suggest" onclick="sendSuggestion(this)">Create campaigns for this week</button>
           </div>
           <div class="store-card" id="store-preview"></div>
@@ -2207,14 +2208,30 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   const CAMPAIGN_KEYWORDS = ['campaign','campaigns','create','launch','write','generate',
     'email','instagram','tiktok','promote','marketing','post','ad','ads','send','draft'];
 
+  const TREND_KEYWORDS = ['trend','trending','market','popular','demand','season','seasonal',
+    'tiktok trend','viral','search','google','people buying','what\'s hot','industry',
+    'competitor','outside','broader','external','news','2026'];
+
   function isCampaignIntent(q) {
     const lower = q.toLowerCase();
-    return CAMPAIGN_KEYWORDS.some(kw => {
-      const idx = lower.indexOf(kw);
-      if (idx === -1) return false;
-      // Avoid "post office", "send money" type false positives — require commerce context nearby
-      return true;
-    });
+    return CAMPAIGN_KEYWORDS.some(kw => lower.includes(kw));
+  }
+
+  function isTrendQuestion(q) {
+    const lower = q.toLowerCase();
+    return TREND_KEYWORDS.some(kw => lower.includes(kw));
+  }
+
+  // Build a focused search query from the user's question + top store products
+  function buildTrendQuery(q) {
+    const d = cachedStoreData;
+    const topProduct = (d?.top_products || [])[0]?.title || (d?.store_name || '');
+    const month = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    // If question mentions a specific product, use that; otherwise use top product
+    const productMention = (d?.top_products || [])
+      .find(p => q.toLowerCase().includes(p.title.split(' ')[0].toLowerCase()));
+    const focus = productMention ? productMention.title : topProduct;
+    return `${focus} ${month} trend ecommerce`;
   }
 
   function appendChatMessage(role, html) {
@@ -2261,7 +2278,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     runQuery();
   }
 
-  async function answerChat(query) {
+  async function answerChat(query, trendData) {
     const apiKey = sessionStorage.getItem('mi_api_key');
     if (!apiKey) throw new Error('No API key — please refresh and enter your key.');
 
@@ -2278,6 +2295,10 @@ Top products: ${(d.top_products||[]).slice(0,5).map(p=>`${p.title} [sold:${p.uni
 Low-stock alerts: ${(d.alerts||[]).map(a=>a.message||a.product).join('; ') || 'none'}
 Customers: repeat=${d.customer_segments.repeat_buyers} lapsed30d=${d.customer_segments.lapsed_30d} newThisWeek=${d.customer_segments.new_this_week}`;
 
+    const trendSection = trendData
+      ? `\nLive market trends (from web search):\n${trendData}`
+      : '';
+
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -2288,13 +2309,14 @@ Customers: repeat=${d.customer_segments.repeat_buyers} lapsed30d=${d.customer_se
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 280,
-        system: `You are MailIntel, a friendly commerce intelligence assistant embedded in a store dashboard.
-Answer questions about the store data concisely (2-4 sentences max).
-Use specific numbers from the data. Be warm and direct — like a trusted advisor, not a report generator.
-Never say "based on your data" — say "We've identified" or "Looking at the numbers" or just state the fact directly.
-Never say "Mailchimp". Format responses with <strong> for key numbers. Keep it short.`,
-        messages: [{ role: 'user', content: `Store data:\n${ctx}\n\nQuestion: ${query}` }]
+        max_tokens: 350,
+        system: `You are MailIntel, a commerce intelligence assistant with access to both store data and live market trends.
+Answer questions concisely (3-5 sentences). Use specific numbers from the store data.
+When trend data is provided, connect it to the store's products — explain what the external signal means for this specific store.
+Be warm and direct — like a trusted advisor, not a report generator.
+Never say "based on your data" — say "Looking at the numbers" or state facts directly.
+Never say "Mailchimp". Format key numbers and product names with <strong>. Keep it conversational.`,
+        messages: [{ role: 'user', content: `Store data:\n${ctx}${trendSection}\n\nQuestion: ${query}` }]
       })
     });
 
@@ -2352,21 +2374,37 @@ Never say "Mailchimp". Format responses with <strong> for key numbers. Keep it s
       }
 
     } else {
-      // Chat path: direct Haiku answer from store data
+      // Chat path: direct Haiku answer from store data (+ Brave trends if relevant)
       setUI('running');
       showTypingIndicator();
 
       try {
-        const answer = await answerChat(q);
+        // Fetch store cache + trends in parallel if it's a trend question
+        if (!cachedStoreData) {
+          cachedStoreData = dataMode === 'mock' ? MOCK_SHOPIFY_DATA : await fetchShopify();
+        }
+
+        let trendData = null;
+        if (isTrendQuestion(q)) {
+          const tq = buildTrendQuery(q);
+          trendData = await searchTrends(tq);
+        }
+
+        const answer = await answerChat(q, trendData);
         hideTypingIndicator();
+
+        // Show a subtle "web search" tag if trends were used
+        const searchBadge = trendData
+          ? `<div style="margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--subtle);letter-spacing:0.05em">🔍 MARKET DATA VIA BRAVE SEARCH</div>`
+          : '';
 
         // Offer campaign CTA if answer surfaces an opportunity
         const triggersCampaign = /opportunit|low stock|campaign|reorder|lapsed|best customer/i.test(answer);
-        const html = answer
-          + (triggersCampaign
-              ? `<br><button class="chat-campaign-btn" onclick="sendCampaignIntent()">Create campaigns →</button>`
-              : '');
-        appendChatMessage('ai', html);
+        const campaignBtn = triggersCampaign
+          ? `<br><button class="chat-campaign-btn" onclick="sendCampaignIntent()">Create campaigns →</button>`
+          : '';
+
+        appendChatMessage('ai', answer + searchBadge + campaignBtn);
       } catch (err) {
         console.error(err);
         hideTypingIndicator();
