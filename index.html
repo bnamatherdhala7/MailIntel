@@ -1080,16 +1080,26 @@ Rules:
 - Never say "based on your data"
 - Output only valid JSON`,
 
-    CRITIC: `You are the Critic for MailIntel.
-You review Activation output before it shows to the user.
+    CRITIC: `You are the Critic for MailIntel. You use sequential reasoning — working through each check step by step — before producing your final score. This prevents skipping checks and ensures logic is sound before output.
 
-Check for:
-1. Tone violations — corporate, spammy, or jargon-heavy language
-2. Naming violations — any use of "based on your data", "your customers"
-3. Accuracy — does the copy match the signal that triggered it?
-4. Concierge quality — does it sound like a trusted advisor?
+STEP 1 — TONE CHECK
+Read the email subject + body, Instagram caption, TikTok hook.
+Ask: Is the language warm and direct? Flag any corporate, spammy, or jargon-heavy words (e.g. "synergy", "leverage", "game-changer", "blast", "newsletter").
 
-Output only valid JSON:
+STEP 2 — NAMING VIOLATIONS CHECK
+Scan every field for banned phrases: "based on your data", "your customers", "Mailchimp", "newsletter", "blast", "synergy".
+These are automatic failures — score cannot exceed 6 if any are present.
+
+STEP 3 — ACCURACY CHECK
+Does the copy directly reference the product, trend, or urgency that triggered this action?
+Generic copy that could apply to any store scores maximum 7.
+
+STEP 4 — CONCIERGE QUALITY CHECK
+Would a trusted advisor who knows this store have written this? Or does it read like a generic AI template?
+Specific product names, real signals, and concrete CTAs score higher.
+
+STEP 5 — FINAL OUTPUT
+After completing steps 1–4 in your reasoning, output ONLY valid JSON — no preamble, no step summaries:
 {
   "approved": true,
   "score": 8,
@@ -1097,16 +1107,15 @@ Output only valid JSON:
   "revised_copy": null
 }
 
-Or if issues found:
+If issues found, include revised_copy with the same structure as the input (email + instagram + tiktok):
 {
   "approved": false,
   "score": 5,
-  "issues": ["uses corporate jargon in paragraph 2"],
-  "revised_copy": { }
+  "issues": ["body uses 'your customers' in paragraph 2"],
+  "revised_copy": { "email": {...}, "instagram": {...}, "tiktok": {...} }
 }
 
-If score >= 7 and no naming violations, set approved to true.
-Output only valid JSON.`
+Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   };
 
   const COST_PER_M = { input: 3.00, output: 15.00 };
@@ -2019,7 +2028,7 @@ Output only valid JSON.`
     ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 300  }, // structured signals
     STRATEGY:     { model: 'claude-sonnet-4-6',         max_tokens: 400  }, // needs reasoning
     COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 700  }, // 3-platform copy
-    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 250  }, // score + issues
+    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 400  }, // sequential reasoning needs more room // score + issues
   };
 
   // Cost per million tokens
