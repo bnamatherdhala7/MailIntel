@@ -262,6 +262,34 @@
       box-shadow: var(--shadow-sm);
     }
     .chat-bubble-ai strong { color: var(--text); font-weight: 600; }
+    /* Structured answer components */
+    .ai-answer { display: flex; flex-direction: column; gap: 8px; }
+    .ai-headline {
+      font-family: var(--display); font-weight: 700; font-size: 13px;
+      color: var(--text); line-height: 1.4;
+    }
+    .ai-stats {
+      display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0;
+    }
+    .ai-stat {
+      background: var(--surface); border: 1px solid var(--border-md);
+      border-radius: 8px; padding: 6px 10px;
+      display: flex; flex-direction: column; gap: 1px; min-width: 60px;
+    }
+    .ai-stat-val {
+      font-family: var(--display); font-weight: 700; font-size: 15px;
+      color: var(--text); line-height: 1.2;
+    }
+    .ai-stat-val.alert { color: #EF4444; }
+    .ai-stat-val.good  { color: var(--green); }
+    .ai-stat-lbl {
+      font-family: var(--mono); font-size: 9px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+    }
+    .ai-context {
+      font-family: var(--sans); font-size: 12px; color: var(--muted);
+      line-height: 1.55; border-top: 1px solid var(--border); padding-top: 7px;
+    }
     .chat-bubble-ai .chat-campaign-btn {
       display: inline-block; margin-top: 10px;
       font-family: var(--display); font-size: 12px; font-weight: 700;
@@ -2511,13 +2539,25 @@ Customers: repeat=${d.customer_segments.repeat_buyers} lapsed30d=${d.customer_se
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 350,
-        system: `You are MailIntel, a commerce intelligence assistant with access to both store data and live market trends.
-Answer questions concisely (3-5 sentences). Use specific numbers from the store data.
-When trend data is provided, connect it to the store's products — explain what the external signal means for this specific store.
-Be warm and direct — like a trusted advisor, not a report generator.
-Never say "based on your data" — say "Looking at the numbers" or state facts directly.
-Never say "Mailchimp". Format key numbers and product names with <strong>. Keep it conversational.`,
+        max_tokens: 500,
+        system: `You are MailIntel, a commerce intelligence assistant. Answer every question using this exact HTML structure:
+
+<div class="ai-answer">
+  <div class="ai-headline">One crisp sentence with the key insight and most important number.</div>
+  <div class="ai-stats">
+    <div class="ai-stat"><span class="ai-stat-val">VALUE</span><span class="ai-stat-lbl">LABEL</span></div>
+    <!-- 2–4 stats maximum. Omit this block entirely if the question has no numeric data. -->
+  </div>
+  <div class="ai-context">1–2 sentences: what this means or what to do next.</div>
+</div>
+
+Rules:
+- ai-stat-val: add class "alert" for low stock / negative values, "good" for positive trends (e.g. <span class="ai-stat-val good">+28%</span>)
+- ai-stats block: omit completely for questions with no numbers
+- ai-context: if trend data is provided, connect it to the specific product ("Canvas Totes are trending up 28% — good timing to push stock")
+- Never say "based on your data" — state facts directly
+- Never say "Mailchimp"
+- Output ONLY the HTML block — no text before or after it`,
         messages: [{ role: 'user', content: `Store data:\n${ctx}${trendSection}\n\nQuestion: ${query}` }]
       })
     });
