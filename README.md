@@ -29,7 +29,7 @@ Your store data is all there — revenue, orders, product velocity, low-stock al
 |-------|-------|------|----------------|
 | **Orchestrator** | Haiku 4.5 | Parses your query, sets focus + priority | Query → `{ focus, priority, context }` |
 | **Signal Analyst** | Haiku 4.5 | Reads store data, finds one Win + one Opportunity | Store data → `{ win, opportunity, confidence }` |
-| **Strategist** | Sonnet 4.6 | Cross-references signals with live web trends, proposes 2 Next Best Actions | Signals + Brave trends → `{ actions[2] }` |
+| **Strategist** | Sonnet 4.6 | Cross-references signals with live web trends, proposes 2 Next Best Actions | Signals + Brave trends → `{ actions[2] }` each with `trends[2]` citations |
 | **Activation** | Sonnet 4.6 | Writes Email + Instagram + TikTok copy in one batch, grounded in trend data | Action + trends → `{ email, instagram, tiktok }` |
 | **Critic** | Haiku 4.5 | Sequential 5-step reasoning → scores copy 1–10, rewrites if needed | Draft → `{ approved, score, revised_copy }` |
 
@@ -57,7 +57,7 @@ Every agent call streams into the Intelligence Trace panel in real time. You see
 
 ![Results Overview](docs/screenshots/04-results-overview.png)
 
-The Analyst surfaces what's winning and what's stalling. The Strategist explains why and proposes the two actions worth taking this week — enriched with live Brave Search trend data.
+The Analyst card shows WIN and OPP labels with the product name, metric chip (e.g. "4 sold · 8 units left"), and a one-sentence insight. The Strategist shows each action with a trigger chip, causal rationale, and 2 clickable trend citations linking to the live Brave Search sources.
 
 ---
 
@@ -105,7 +105,7 @@ Ask quick store questions without triggering the full agent pipeline. Haiku answ
 
 ![Chat Question](docs/screenshots/11-chat-question.png)
 
-When the question involves trends or market signals, Brave Search fires in parallel and the answer is grounded in live web data.
+When the question involves trends or market signals, Brave Search fires in parallel and the answer renders as a structured card: bold headline, numeric stat chips (green for positive, red for alerts), and a one-sentence so-what grounded in live web data.
 
 ---
 
@@ -114,7 +114,9 @@ When the question involves trends or market signals, Brave Search fires in paral
 - **Side-by-side email editor** — AI copy on the left, rendered preview on the right, live-synced as you type
 - **A/B variant generator** — alternative subject line, caption, or hook via a focused 120-token Claude call (~$0.001)
 - **Critic quality score** — every card shows a 1–10 score; copies that score below 8 are auto-revised before reaching you
-- **Market Context strip** — collapsible teal strip on every campaign card showing the Brave Search bullets that shaped the copy
+- **Market Context strip** — collapsible teal strip on every campaign card showing Brave Search bullets with clickable source domain links (e.g. `bloomberg.com ↗`)
+- **Trend citations on Strategist** — each proposed action shows 2 trend observations with clickable source links pulled from the same single Brave Search call
+- **Structured chat responses** — Haiku chat answers render as headline + numeric stat chips + context sentence instead of plain text
 - **Audience selector** — target All contacts · Repeat buyers · Lapsed 30d · New this week; contact count and estimated revenue update live
 - **Schedule toggle** — Now · Best time ✨ (AI-recommended per platform) · Custom datetime
 - **Full Intelligence Trace** — every agent call, every response, every token cost, in real time
