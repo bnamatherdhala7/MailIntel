@@ -1,6 +1,6 @@
 # MailIntel — Product Requirements Document
 
-**Version:** 1.0 · **Date:** April 2026 · **Status:** MVP Complete
+**Version:** 1.2 · **Date:** April 2026 · **Status:** MVP Complete
 
 > Transforming the marketing stack from a "Service Provider" to a "Business Partner" through an AI-driven Intelligence Layer.
 
@@ -141,16 +141,33 @@ MailIntel never executes an action without explicit user approval. Two gates are
 
 This is a product principle, not a technical limitation. Trust in AI-led commerce requires that humans stay in the loop on every consequential action.
 
-### 3.5 The Critic Loop — Reliability by Design
+### 3.5 The Critic Loop — Sequential Reasoning by Design
 
-The Critic agent is the only way to deliver professional-grade copy at volume without human review of every output. It checks:
+The Critic agent is the only way to deliver professional-grade copy at volume without human review of every output. It uses a **5-step sequential reasoning chain** (powered by the `@modelcontextprotocol/server-sequential-thinking` MCP) before producing its final JSON score:
 
-1. **Tone violations** — corporate, spammy, or jargon-heavy language
-2. **Naming violations** — banned phrases ("based on your data", "your customers", "Mailchimp")
-3. **Accuracy** — does the copy match the signal that triggered it?
-4. **Concierge quality** — does it sound like a trusted advisor?
+```
+STEP 1 — TONE CHECK
+  Is the language warm and direct? Flag jargon ("synergy", "leverage", "game-changer").
+
+STEP 2 — NAMING VIOLATIONS CHECK
+  Scan for banned phrases: "based on your data", "your customers", "Mailchimp", "newsletter".
+  Any match → score cannot exceed 6.
+
+STEP 3 — ACCURACY CHECK
+  Does the copy directly reference the product, trend, or urgency that triggered this action?
+  Generic copy scores maximum 7.
+
+STEP 4 — CONCIERGE QUALITY CHECK
+  Would a trusted advisor who knows this store have written this?
+  Specific product names + real signals + concrete CTAs score higher.
+
+STEP 5 — FINAL OUTPUT
+  {"approved": true, "score": 9, "issues": [], "revised_copy": null}
+```
 
 Score ≥ 8 and no violations → approved as-is. Score < 8 → the Critic returns a `revised_copy` in the same JSON structure, and the card renders the revised version. The user always sees the best version.
+
+**Sequential reasoning prevents the most common LLM failure mode in copy evaluation: skipping checks when the copy "looks good"**. By forcing explicit reasoning through each criterion before committing to a score, the Critic catches subtle violations that a direct scoring call misses.
 
 **No campaign card renders without passing the Critic.**
 
@@ -184,9 +201,13 @@ Parallel fetch:
 
 A CORS proxy in `dev-server.js` (`/shopify-proxy?path=...`) forwards all requests server-side. The Shopify Admin API does not support browser direct access.
 
-### 3.8 MCP Integration — Local Shopify Server
+### 3.8 MCP Integration — Three Connected Servers
 
-`shopify-mcp.js` implements the MCP stdio protocol, exposing 6 Shopify tools to Claude Code. This enables Claude Code itself to query the store during development — useful for debugging, testing prompts with real data, and running ad-hoc queries without writing code.
+MailIntel registers three MCP servers in `.mcp.json` (gitignored). Two serve the runtime app directly via proxy; one serves Claude Code during development.
+
+#### 3.8.1 Shopify MCP (`shopify-mcp.js`)
+
+Local stdio server implementing the MCP protocol and exposing 6 Shopify Admin REST tools to Claude Code. Useful for development-time queries, prompt testing against real data, and ad-hoc store analysis without writing code.
 
 | Tool | Returns | Token default |
 |------|---------|--------------|
@@ -195,9 +216,33 @@ A CORS proxy in `dev-server.js` (`/shopify-proxy?path=...`) forwards all request
 | `get_orders` | Order list | `limit: 10, created_at_min: 7d` |
 | `get_customers` | Customer list | `limit: 20, fields: "name,orders_count"` |
 | `get_inventory` | Product + variant + stock | `limit: 20` |
-| `get_sales_summary` | Revenue + order count (aggregated) | No pagination — server aggregates |
+| `get_sales_summary` | Revenue + order count (aggregated) | Server-side aggregation — no raw list |
 
-Registered in `.mcp.json` (gitignored). Activated via `enableAllProjectMcpServers: true` in Claude Code settings.
+#### 3.8.2 Brave Search MCP (`@modelcontextprotocol/server-brave-search`)
+
+Provides live web search for market trend signals. In the runtime app, Brave Search is accessed via `/brave-proxy` in `dev-server.js` (which handles gzip decompression and CORS). The MCP registration makes the same capability available to Claude Code for research tasks during development.
+
+**Runtime usage pattern:**
+```
+1 search query constructed from: winning product + current month + "trend ecommerce"
+1 Brave Search call → 4 results → compressed to bullet list (~200 tokens)
+Same bullet list reused across:
+  → Strategist prompt   (shapes strategy rationale)
+  → Activation prompt   (makes copy timely and specific)
+  → Market Context strip on each campaign card (user-visible)
+```
+
+Zero additional API calls. One search, three surfaces.
+
+**Market Context strip** — a collapsible teal section on every campaign card showing the Brave Search bullets that shaped the copy. Gives merchants visibility into what external signal drove the campaign angle, increasing trust and launch confidence.
+
+#### 3.8.3 Sequential Thinking MCP (`@modelcontextprotocol/server-sequential-thinking`)
+
+Forces multi-step reasoning in the Critic agent before committing to a score. Rather than a direct "score this copy" prompt, the Critic is structured as a 5-step chain (see §3.5). The sequential-thinking MCP server makes this pattern available to Claude Code for any complex evaluation task during development.
+
+**Why this matters architecturally:** The most common LLM failure mode in copy evaluation is skipping checks when copy "looks plausible". Sequential reasoning makes each criterion a mandatory step — you cannot reach STEP 5 without having explicitly worked through STEPS 1–4.
+
+All three servers are registered in `.mcp.json` (gitignored). Activated via `enableAllProjectMcpServers: true` in Claude Code settings.
 
 ### 3.9 MCP Token Optimization — The Token Tax Protocol
 

@@ -1,8 +1,8 @@
 # MailIntel
 
-**`Claude Haiku 4.5 + Sonnet 4.6`** · **`~$0.04/run`** · **`No build tools`** · **`Vanilla HTML/JS`**
+**`Claude Haiku 4.5 + Sonnet 4.6`** · **`~$0.022/run`** · **`No build tools`** · **`Vanilla HTML/JS`**
 
-SMB owners spend 4+ hours a week switching between dashboards that never tell them what to do next. MailIntel runs 5 AI agents against your Shopify data and returns two ready-to-launch campaigns — across Email, Instagram, and TikTok — in 90 seconds, for $0.04.
+SMB owners spend 4+ hours a week switching between dashboards that never tell them what to do next. MailIntel runs 5 AI agents against your Shopify data and returns two ready-to-launch campaigns — across Email, Instagram, and TikTok — in 90 seconds, for $0.022.
 
 ---
 
@@ -17,8 +17,8 @@ Your store data is all there — revenue, orders, product velocity, low-stock al
 ## How It Works
 
 1. **You ask one question** — *"Give me a business health check and growth strategy for this week."*
-2. **Five agents run in sequence** — Orchestrator plans → Signal Analyst reads your store data → Strategist finds the angle → Activation writes the copy → Critic quality-checks everything before it reaches you
-3. **Two campaign cards appear** — Email + Instagram + TikTok copy, grounded in the specific signal that triggered them
+2. **Five agents run in sequence** — Orchestrator plans → Signal Analyst reads your store data → Strategist pulls live market trends → Activation writes the copy → Critic quality-checks everything before it reaches you
+3. **Two campaign cards appear** — Email + Instagram + TikTok copy, grounded in the specific signal that triggered them, with a live Market Context strip showing the Brave Search trends that shaped the copy
 4. **You edit, approve, and launch** — one click per platform, on your schedule
 
 ---
@@ -29,13 +29,21 @@ Your store data is all there — revenue, orders, product velocity, low-stock al
 |-------|-------|------|----------------|
 | **Orchestrator** | Haiku 4.5 | Parses your query, sets focus + priority | Query → `{ focus, priority, context }` |
 | **Signal Analyst** | Haiku 4.5 | Reads store data, finds one Win + one Opportunity | Store data → `{ win, opportunity, confidence }` |
-| **Strategist** | Sonnet 4.6 | Explains the *why*, proposes 2 Next Best Actions | Signals → `{ actions[2] }` |
-| **Activation** | Sonnet 4.6 | Writes Email + Instagram + TikTok copy in one batch | Action → `{ email, instagram, tiktok }` |
-| **Critic** | Haiku 4.5 | Scores copy 1–10, rewrites if needed — gates every card | Draft → `{ approved, score, revised_copy }` |
+| **Strategist** | Sonnet 4.6 | Cross-references signals with live web trends, proposes 2 Next Best Actions | Signals + Brave trends → `{ actions[2] }` |
+| **Activation** | Sonnet 4.6 | Writes Email + Instagram + TikTok copy in one batch, grounded in trend data | Action + trends → `{ email, instagram, tiktok }` |
+| **Critic** | Haiku 4.5 | Sequential 5-step reasoning → scores copy 1–10, rewrites if needed | Draft → `{ approved, score, revised_copy }` |
 
 ---
 
 ## Screenshots
+
+**Command input + welcome dashboard**
+
+![Command Input](docs/screenshots/02-command-input.png)
+
+Ask anything — a quick store question gets a Haiku answer in ~1 second. Say "create campaigns" and the full 5-agent loop fires.
+
+---
 
 **Agents running — live trace panel**
 
@@ -49,7 +57,7 @@ Every agent call streams into the Intelligence Trace panel in real time. You see
 
 ![Results Overview](docs/screenshots/04-results-overview.png)
 
-The Analyst surfaces what's winning and what's stalling. The Strategist explains why and proposes the two actions worth taking this week.
+The Analyst surfaces what's winning and what's stalling. The Strategist explains why and proposes the two actions worth taking this week — enriched with live Brave Search trend data.
 
 ---
 
@@ -85,11 +93,28 @@ Each log line is colour-coded by agent. `→` shows what was sent. `←` shows w
 
 ---
 
+**Chat interface — conversational store intelligence**
+
+![Chat Welcome](docs/screenshots/10-chat-welcome.png)
+
+Ask quick store questions without triggering the full agent pipeline. Haiku answers in ~1 second from cached store data.
+
+---
+
+**Chat with live market trends**
+
+![Chat Question](docs/screenshots/11-chat-question.png)
+
+When the question involves trends or market signals, Brave Search fires in parallel and the answer is grounded in live web data.
+
+---
+
 ## Key Capabilities
 
 - **Side-by-side email editor** — AI copy on the left, rendered preview on the right, live-synced as you type
 - **A/B variant generator** — alternative subject line, caption, or hook via a focused 120-token Claude call (~$0.001)
 - **Critic quality score** — every card shows a 1–10 score; copies that score below 8 are auto-revised before reaching you
+- **Market Context strip** — collapsible teal strip on every campaign card showing the Brave Search bullets that shaped the copy
 - **Audience selector** — target All contacts · Repeat buyers · Lapsed 30d · New this week; contact count and estimated revenue update live
 - **Schedule toggle** — Now · Best time ✨ (AI-recommended per platform) · Custom datetime
 - **Full Intelligence Trace** — every agent call, every response, every token cost, in real time
@@ -98,9 +123,10 @@ Each log line is colour-coded by agent. `→` shows what was sent. `←` shows w
 
 ## Chat Interface
 
-MailIntel now includes a full conversational layer that separates quick store questions from campaign generation:
+MailIntel includes a full conversational layer that separates quick store questions from campaign generation:
 
 - **Ask anything** — *"Where did the revenue come from?" "Who are my best customers?" "Which products are low on stock?"* — Haiku answers directly from live store data in ~1 second for ~$0.00015
+- **Market trend questions** — *"What's trending in eco products?" "What are people buying?"* — Brave Search fires in parallel, answers grounded in live web data
 - **Create campaigns** — When you say "create campaigns" or "launch an email", the intent detector routes to the 5-agent pipeline with a confirm step first
 - **Campaign CTA** — When a chat answer surfaces an opportunity (low stock, lapsed customers), a "Create campaigns →" button appears inline
 
@@ -122,9 +148,45 @@ SHOPIFY_ADMIN_API_KEY=shpat_...
 
 ---
 
-## MCP Integration — Local Shopify Server
+## Brave Search Integration
 
-`shopify-mcp.js` is a local stdio MCP server that wraps the Shopify Admin API with 6 tools:
+Every campaign run includes a **live web trend fetch via Brave Search**. One search query is constructed from the winning product + current month, fired in parallel with the Strategist call, and the results are reused across three surfaces — all for a single API call:
+
+```
+1 Brave Search call →  Strategist prompt  (shapes the strategy)
+                    →  Activation prompt  (makes copy timely and specific)
+                    →  Market Context strip on each campaign card
+```
+
+The Brave Search results are compressed to bullet form before being passed to agents:
+
+```
+• Canvas Tote April 2026 trend ecommerce: Search interest up 28% YoY...
+• Eco canvas bags spring 2026: Consumer preference shifting toward...
+```
+
+**Zero extra API calls** — the same trend string is cached and threaded through the entire pipeline.
+
+The Brave proxy in `dev-server.js` handles gzip decompression server-side:
+
+```bash
+# Add to .env
+BRAVE_SEARCH_API_KEY=BSA...
+```
+
+---
+
+## MCP Integration
+
+Three MCP servers are registered in `.mcp.json` (gitignored):
+
+| Server | Protocol | What it does |
+|--------|----------|--------------|
+| `shopify` | Local stdio (`shopify-mcp.js`) | 6 tools: get_shop_info, get_products, get_orders, get_customers, get_inventory, get_sales_summary |
+| `brave-search` | npx (`@modelcontextprotocol/server-brave-search`) | Web search for live market trends |
+| `sequential-thinking` | npx (`@modelcontextprotocol/server-sequential-thinking`) | Forces step-by-step reasoning in complex evaluations |
+
+### Shopify MCP — 6 Tools
 
 | Tool | What it returns | Token-efficient default |
 |------|----------------|------------------------|
@@ -135,7 +197,19 @@ SHOPIFY_ADMIN_API_KEY=shpat_...
 | `get_inventory` | Product + variant + stock | `limit: 20, fields: "product,inventory"` |
 | `get_sales_summary` | Aggregated revenue + count | Server-side aggregation — no raw order list |
 
-The MCP server is registered in `.mcp.json` (gitignored) and picked up automatically by Claude Code via `enableAllProjectMcpServers: true`.
+### Sequential Thinking — Critic Quality Gate
+
+The Critic agent uses a **5-step sequential reasoning chain** before producing its final JSON score. This prevents skipping checks and ensures logic is sound before output:
+
+```
+STEP 1 — TONE CHECK        Is language warm? Any jargon?
+STEP 2 — NAMING VIOLATIONS  "Mailchimp", "based on your data" = auto-fail
+STEP 3 — ACCURACY          Does copy match the signal that triggered it?
+STEP 4 — CONCIERGE QUALITY  Would a trusted advisor write this?
+STEP 5 — FINAL OUTPUT      {"approved": true, "score": 9, ...}
+```
+
+The `parseJ()` function handles the mixed reasoning+JSON output: it tries direct parse first, then extracts from the first `{`, then the last `{` — so both pure-JSON agents (Analyst, Strategist) and reasoning-prefix agents (Critic) parse correctly.
 
 ---
 
@@ -152,8 +226,6 @@ Every MCP tool response carries a **token tax** — the cost of transmitting raw
 Reduction: 99.6%
 ```
 
-`get_sales_summary` does the arithmetic server-side in `shopify-mcp.js` and returns 5 fields. Never ask Claude to sum a list of 250 orders.
-
 ### 2. Fields filtering on every call
 
 ```javascript
@@ -166,16 +238,12 @@ pick(product, ['title', 'variants.inventory_quantity'])
 Reduction: 95%
 ```
 
-Every tool accepts a `fields` parameter. Passing `fields: "title,inventory"` vs nothing is the difference between 800 and 40 tokens per product.
-
 ### 3. Time-scoped queries
 
 ```
 ❌ orders.json (all-time)           →  250+ results, thousands of tokens
 ✅ orders.json?created_at_min=7d   →  13 results, ~400 tokens
 ```
-
-Every order/customer query defaults to the last 7 days. Never fetch all-time data for a weekly report.
 
 ### 4. Compressed context for agent calls
 
@@ -185,12 +253,11 @@ Agents receive plain-text summaries, not raw JSON:
 ❌ Full fetchShopify() JSON  →  ~1,200 tokens per agent call
 ✅ Compressed shopSummary   →  ~150 tokens per agent call
 
-Example:
-  Store: Vendant
-  Revenue 7d: $1,048 (13 orders, AOV $80.62)
-  Top products: Canvas Tote Natural [sold:4, inv:8] | Eco Pin Set [sold:2, inv:338]
-  Alerts: Canvas Tote (CT-NAT-001) — only 8 left
-  Segments: repeat=0 lapsed=15 new=15
+Store: Vendant
+Revenue 7d: $1,048 (13 orders, AOV $80.62)
+Top products: Canvas Tote Natural [sold:4, inv:8] | Eco Pin Set [sold:2, inv:338]
+Alerts: Canvas Tote (CT-NAT-001) — only 8 left
+Segments: repeat=0 lapsed=15 new=15
 ```
 
 ### Before / After — Full Run Cost
@@ -212,8 +279,10 @@ Example:
 | Frontend | Vanilla HTML + CSS + JS | Zero setup, deploy anywhere — no build step |
 | AI | Claude Sonnet 4.6 + Haiku 4.5 | Sonnet for reasoning, Haiku for routing + critique |
 | Commerce data | Shopify Admin REST API `2026-01` | Live orders, products, customers, inventory |
-| MCP | Local stdio server (`shopify-mcp.js`) | 6 tools with fields filtering + aggregation |
-| CORS proxy | `dev-server.js` `/shopify-proxy` | Browser can't call Shopify Admin API directly |
+| Market trends | Brave Search API | Real-time web signals for campaign timing |
+| Sequential reasoning | `@modelcontextprotocol/server-sequential-thinking` | 5-step Critic chain |
+| MCP | Local stdio server (`shopify-mcp.js`) + 2 npx servers | 6 Shopify tools + search + reasoning |
+| CORS proxy | `dev-server.js` (`/shopify-proxy`, `/brave-proxy`) | Browser can't call Shopify Admin or Brave directly |
 | Fonts | Syne + JetBrains Mono + DM Sans | Display / trace / body hierarchy |
 | Dev server | `dev-server.js` (Node built-in `http`) | Reads `.env`, injects keys at serve time |
 
@@ -230,9 +299,10 @@ cat > .env <<EOF
 ANTHROPIC_API_KEY=sk-ant-...
 SHOPIFY_SHOP_URL=https://your-store.myshopify.com
 SHOPIFY_ADMIN_API_KEY=shpat_...
+BRAVE_SEARCH_API_KEY=BSA...
 EOF
 
-# Start dev server — reads .env, injects keys, proxies Shopify API
+# Start dev server — reads .env, injects keys, proxies Shopify + Brave APIs
 node dev-server.js
 ```
 
@@ -251,6 +321,7 @@ node seed-shopify.js
 | Scenario | Cost |
 |----------|------|
 | Chat answer (Haiku, store Q&A) | ~$0.00015 |
+| Chat answer with Brave Search trend fetch | ~$0.00020 |
 | Full run — 5 agents, 2 campaign cards | ~$0.022 |
 | 300 full runs/month | ~$6.60/month |
 | A/B variant call | ~$0.001 |
@@ -264,8 +335,6 @@ node seed-shopify.js
 
 - [`CLAUDE.md`](CLAUDE.md) — Build spec: Workflows, Actions, Tools (the authoritative source)
 - [`docs/prd.md`](docs/prd.md) — Full product requirements: problem analysis, architecture decisions, roadmap
-- [`docs/architecture.md`](docs/architecture.md) — Agent pipeline deep dive, data flow, cost breakdown
-- [`docs/product.md`](docs/product.md) — Market context, user personas, value proposition
 - [`agent-prompts.js`](agent-prompts.js) — All 5 system prompts
 - [`mock-data.js`](mock-data.js) — Mock Shopify data + audience segments
 - [`design-tokens.md`](design-tokens.md) — Colour tokens, typography, component specs

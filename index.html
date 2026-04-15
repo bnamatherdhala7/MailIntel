@@ -1687,7 +1687,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
           <div class="copy-section">
             <div class="copy-field-label">Subject line</div>
             <div class="copy-field-value" id="email-subj-${id}">${esc(e.subject || '')}</div>
-            <button class="copy-ab-btn" onclick="genVariant('${id}')" id="ab-btn-${id}">⚡ A/B variant</button>
+            <button class="copy-ab-btn" onclick="genVariant('${id}')">⚡ A/B variant</button>
             <div class="variant-strip" id="var-email-${id}">
               <div class="variant-strip-lbl">A/B VARIANT</div>
               <div id="var-email-text-${id}" style="margin:4px 0 6px"></div>
@@ -2056,6 +2056,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   function clearRail() {
     pendingCount = 0;
     actionSeq    = 0;
+    clearFeed();
   }
 
   function updateFeedPad() {}
@@ -2086,23 +2087,31 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     if (s.includes('```')) {
       s = s.replace(/```(?:json)?\s*/g, '').replace(/```/g, '').trim();
     }
-    // Find the LAST complete {...} block by brace-counting from the last {
-    // This handles Critic reasoning preamble before the final JSON output
-    const extracted = extractLastJson(s);
-    if (extracted) return JSON.parse(extracted);
-    return JSON.parse(s);
+    // 1. Direct parse — fastest, works when response is pure JSON (Analyst, Strategist)
+    try { return JSON.parse(s); } catch (_) {}
+    // 2. Extract from first { — handles preamble text before JSON block
+    const fi = s.indexOf('{');
+    if (fi !== -1) {
+      const fromFirst = extractJsonFrom(s, fi);
+      if (fromFirst) { try { return JSON.parse(fromFirst); } catch (_) {} }
+    }
+    // 3. Extract from last { — handles Critic sequential reasoning where JSON comes at end
+    const li = s.lastIndexOf('{');
+    if (li !== -1 && li !== fi) {
+      const fromLast = extractJsonFrom(s, li);
+      if (fromLast) { try { return JSON.parse(fromLast); } catch (_) {} }
+    }
+    throw new SyntaxError('Could not parse JSON from agent response: ' + s.slice(0, 120));
   }
 
-  function extractLastJson(s) {
-    // Walk backwards to find the last { that opens a complete JSON object
-    const start = s.lastIndexOf('{');
-    if (start === -1) return null;
+  // Extract a complete {...} block starting at position `start`
+  function extractJsonFrom(s, start) {
     let depth = 0, inStr = false, escape = false;
     for (let i = start; i < s.length; i++) {
       const c = s[i];
-      if (escape)          { escape = false; continue; }
-      if (c === '\\' && inStr) { escape = true; continue; }
-      if (c === '"')           { inStr = !inStr; continue; }
+      if (escape)              { escape = false; continue; }
+      if (c === '\\' && inStr) { escape = true;  continue; }
+      if (c === '"')           { inStr = !inStr;  continue; }
       if (inStr)               continue;
       if (c === '{') depth++;
       if (c === '}') { depth--; if (depth === 0) return s.slice(start, i + 1); }
@@ -2117,10 +2126,10 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   // Per-agent config: right model + tight token caps = low cost
   const AGENT_CONFIG = {
     ORCHESTRATOR: { model: 'claude-haiku-4-5-20251001', max_tokens: 120  }, // 3-field JSON only
-    ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 500  }, // structured signals — needs room for full JSON
+    ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 700  }, // structured signals
     STRATEGY:     { model: 'claude-sonnet-4-6',         max_tokens: 400  }, // needs reasoning
     COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 700  }, // 3-platform copy
-    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 400  }, // sequential reasoning needs more room // score + issues
+    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 600  }, // sequential reasoning (5 steps) + JSON output
   };
 
   // Cost per million tokens
