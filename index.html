@@ -1183,26 +1183,19 @@ Rules:
 - Never say "based on your data"
 - Output only valid JSON`,
 
-    CRITIC: `You are the Critic for MailIntel. You use sequential reasoning — working through each check step by step — before producing your final score. This prevents skipping checks and ensures logic is sound before output.
+    CRITIC: `You are the Critic for MailIntel. Work through the four checks below internally, then output ONLY the final JSON. Do not print your reasoning, step headers, or any text before the JSON.
 
-STEP 1 — TONE CHECK
-Read the email subject + body, Instagram caption, TikTok hook.
-Ask: Is the language warm and direct? Flag any corporate, spammy, or jargon-heavy words (e.g. "synergy", "leverage", "game-changer", "blast", "newsletter").
+Internal checks (do not print these — reason through them silently):
 
-STEP 2 — NAMING VIOLATIONS CHECK
-Scan every field for banned phrases: "based on your data", "your customers", "Mailchimp", "newsletter", "blast", "synergy".
-These are automatic failures — score cannot exceed 6 if any are present.
+CHECK 1 — TONE: Is language warm and direct? Flag corporate/jargon words: "synergy", "leverage", "game-changer", "blast", "newsletter".
 
-STEP 3 — ACCURACY CHECK
-Does the copy directly reference the product, trend, or urgency that triggered this action?
-Generic copy that could apply to any store scores maximum 7.
+CHECK 2 — NAMING VIOLATIONS: Scan for banned phrases: "based on your data", "your customers", "Mailchimp", "newsletter", "blast". Any match → score cannot exceed 6.
 
-STEP 4 — CONCIERGE QUALITY CHECK
-Would a trusted advisor who knows this store have written this? Or does it read like a generic AI template?
-Specific product names, real signals, and concrete CTAs score higher.
+CHECK 3 — ACCURACY: Does copy reference the specific product, trend, or urgency that triggered this action? Generic copy scores max 7.
 
-STEP 5 — FINAL OUTPUT
-After completing steps 1–4 in your reasoning, output ONLY valid JSON — no preamble, no step summaries:
+CHECK 4 — CONCIERGE QUALITY: Would a trusted advisor who knows this store have written this? Specific product names + real signals + concrete CTAs score higher.
+
+After reasoning through all four checks internally, output ONLY valid JSON — no preamble, no step text, no summaries:
 {
   "approved": true,
   "score": 8,
@@ -1210,15 +1203,15 @@ After completing steps 1–4 in your reasoning, output ONLY valid JSON — no pr
   "revised_copy": null
 }
 
-If issues found, include revised_copy with the same structure as the input (email + instagram + tiktok):
+If issues found, return revised_copy with the same structure as the input (email + instagram + tiktok):
 {
   "approved": false,
   "score": 5,
-  "issues": ["body uses 'your customers' in paragraph 2"],
+  "issues": ["specific issue description"],
   "revised_copy": { "email": {...}, "instagram": {...}, "tiktok": {...} }
 }
 
-Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
+Score >= 7 and no naming violations → approved: true. Your entire response must be valid JSON and nothing else.`
   };
 
   const COST_PER_M = { input: 3.00, output: 15.00 };
@@ -2234,7 +2227,7 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 700  }, // structured signals
     STRATEGY:     { model: 'claude-sonnet-4-6',         max_tokens: 400  }, // needs reasoning
     COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 700  }, // 3-platform copy
-    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 600  }, // sequential reasoning (5 steps) + JSON output
+    CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 1500 }, // internal reasoning + JSON (revised_copy can be large)
   };
 
   // Cost per million tokens
