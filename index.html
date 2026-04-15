@@ -1369,7 +1369,7 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
       if (i > 0) {
         const line = document.createElement('div');
         line.className = 's-line';
-        line.id = `sl-${key}`;
+        line.id = `sline-${key}`;
         step.appendChild(line);
       }
 
@@ -1960,7 +1960,7 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
     }
     if (igTA) {
       const igDisp = document.getElementById(`ig-caption-disp-${id}`);
-      const handle = MOCK_SHOPIFY_DATA.store_name.toLowerCase().replace(/\s/g,'');
+      const handle = (dataMode === 'live' && liveStoreName ? liveStoreName : MOCK_SHOPIFY_DATA.store_name).toLowerCase().replace(/\s/g,'');
       if (igDisp) {
         const lines = igTA.value.split('\n');
         const cap  = lines.filter(l=>!l.startsWith('#')).join(' ');
@@ -2226,7 +2226,7 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
     ORCHESTRATOR: { model: 'claude-haiku-4-5-20251001', max_tokens: 120  }, // 3-field JSON only
     ANALYST:      { model: 'claude-haiku-4-5-20251001', max_tokens: 700  }, // structured signals
     STRATEGY:     { model: 'claude-sonnet-4-6',         max_tokens: 400  }, // needs reasoning
-    COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 700  }, // 3-platform copy
+    COPY:         { model: 'claude-sonnet-4-6',         max_tokens: 900  }, // 3-platform copy
     CRITIC:       { model: 'claude-haiku-4-5-20251001', max_tokens: 1500 }, // internal reasoning + JSON (revised_copy can be large)
   };
 
@@ -2403,15 +2403,19 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
   // CHAT INTERFACE
   // ─────────────────────────────────────────────────────────────────
 
+  // Specific action words — do NOT include generic nouns like 'email', 'post', 'ad'
+  // which also appear in questions ("What's my email open rate?")
   const CAMPAIGN_KEYWORDS = ['campaign','campaigns','create','launch','write','generate',
-    'email','instagram','tiktok','promote','marketing','post','ad','ads','send','draft'];
+    'instagram','tiktok','promote','draft'];
 
   const TREND_KEYWORDS = ['trend','trending','market','popular','demand','season','seasonal',
     'tiktok trend','viral','search','google','people buying','what\'s hot','industry',
     'competitor','outside','broader','external','news','2026'];
 
   function isCampaignIntent(q) {
-    const lower = q.toLowerCase();
+    const lower = q.toLowerCase().trim();
+    // Questions never trigger campaign loop — route to chat for an answer instead
+    if (/^(what|where|who|how|why|which|when|is|are|do|does|did|can|could|show|tell|check|give me a|get me)\b/.test(lower)) return false;
     return CAMPAIGN_KEYWORDS.some(kw => lower.includes(kw));
   }
 
@@ -2703,9 +2707,13 @@ Urgency: ${action.urgency}${trendResults ? `\nMarket trends (use to make copy ti
         const critPrompt = `Action type: ${action.type} | Urgency: ${action.urgency}
 Rationale: ${action.rationale}
 Email subject: ${copyData.email?.subject}
-Email body: ${copyData.email?.body?.slice(0, 280)}
+Email preview: ${copyData.email?.preview_text}
+Email body: ${copyData.email?.body?.slice(0, 500)}
+Email CTA: ${copyData.email?.cta}
 Instagram caption: ${copyData.instagram?.caption}
-TikTok hook: ${copyData.tiktok?.hook}`;
+Instagram hook: ${copyData.instagram?.hook}
+TikTok hook: ${copyData.tiktok?.hook}
+TikTok script: ${copyData.tiktok?.script}`;
         const critRaw  = await callAgent('CRITIC', critPrompt);
         const critData = parseJ(critRaw);
         stepState('CRITIC', 'done');
