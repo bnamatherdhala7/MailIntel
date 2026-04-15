@@ -595,7 +595,7 @@ These metrics prove MailIntel drives the core business and matter to leadership.
 
 **Campaign Fatigue:** Monitor whether increased AI-generated send frequency causes an increase in unsubscribe rates.
 
-**The mitigation:** The Orchestrator agent tracks segment recency — it will not propose an action targeting the same segment within a 48-hour window. This prevents the system from optimising for frequency at the expense of relationship quality.
+**Planned v2 mitigation:** The Orchestrator agent will track segment recency — it will not propose an action targeting the same segment within a 48-hour window. This prevents the system from optimising for frequency at the expense of relationship quality. Requires persistent session history (out of scope for v1; targeted for v2).
 
 Surfacing this counter-metric in reporting demonstrates that MailIntel optimises for long-term merchant revenue, not vanity engagement numbers.
 
