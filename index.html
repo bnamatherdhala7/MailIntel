@@ -1129,22 +1129,24 @@ You receive Shopify commerce data and identify one Win and one Opportunity.
 Output only valid JSON:
 {
   "win": {
-    "product": "product name",
-    "metric": "what is up and by how much",
-    "insight": "plain English, max 2 sentences"
+    "product": "exact product name from data",
+    "metric": "X sold · Y units left" or "X% velocity up · $Z revenue",
+    "insight": "One sentence max. Must include a specific number. State the risk or opportunity plainly."
   },
   "opportunity": {
-    "product": "product name",
-    "metric": "what is lagging",
-    "insight": "plain English, max 2 sentences",
-    "upsell_angle": "how it connects to the win product"
+    "product": "exact product name from data",
+    "metric": "X sold · Y units in stock" or "X% slower than average",
+    "insight": "One sentence max. Must include a specific number. State what action would fix this.",
+    "upsell_angle": "One concrete pairing or bundle angle — max 10 words"
   },
   "confidence": "High | Medium | Low",
   "signals_checked": 3
 }
 
 Rules:
-- Never say "your data" or "your customers" — say "we've identified" or "there's a pattern"
+- metric field: always use the format "X sold · Y units left" or similar — concrete numbers, no vague descriptions
+- insight field: max 1 sentence, must contain at least one number, no filler words like "this indicates" or "it appears"
+- Never say "your data" or "your customers" — state facts directly
 - Confidence is High only if 2+ data points corroborate
 - Output only valid JSON`,
 
@@ -1157,25 +1159,27 @@ Output only valid JSON:
     {
       "id": "action_1",
       "type": "email",
-      "trigger": "which signal drives this",
-      "rationale": "why now — max 1 sentence",
-      "external_trend": "relevant seasonal or search trend",
+      "trigger": "Product name · key metric (e.g. Canvas Tote · 8 left)",
+      "rationale": "Max 12 words. State the causal logic — why this signal = act now.",
+      "external_trend": "One concrete trend fact with a number (e.g. search up 28% YoY)",
       "urgency": "high | medium"
     },
     {
       "id": "action_2",
       "type": "social",
-      "trigger": "which signal drives this",
-      "rationale": "why now — max 1 sentence",
-      "external_trend": "relevant seasonal or search trend",
+      "trigger": "Product name · key metric",
+      "rationale": "Max 12 words. State the causal logic.",
+      "external_trend": "One concrete trend fact with a number",
       "urgency": "high | medium"
     }
   ]
 }
 
 Rules:
+- trigger: always "Product · metric" format — short, specific, scannable
+- rationale: causal logic only — cut anything that doesn't explain WHY NOW. Max 12 words.
+- external_trend: must include a number or percentage — no vague "growing interest" statements
 - Never say "Mailchimp" — say "email campaign"
-- Write as a trusted advisor to a busy shop owner
 - Output only valid JSON`,
 
     COPY: `You are the Activation agent for MailIntel.
@@ -1184,30 +1188,31 @@ You write ready-to-send content for Email, Instagram, and TikTok based on a stra
 Always output all three formats in a single valid JSON object:
 {
   "email": {
-    "subject": "subject line, max 8 words",
-    "preview_text": "preview text, max 12 words",
-    "body": "3 short punchy paragraphs separated by newlines, conversational tone, ends with one CTA sentence",
-    "cta": "CTA button text, max 4 words",
+    "subject": "Must name the specific product. Max 8 words. Create urgency or curiosity.",
+    "preview_text": "Supports the subject line. Max 12 words. Never repeats the subject verbatim.",
+    "body": "3 short paragraphs. Para 1: hook with the signal (low stock / trend / bundle). Para 2: why it matters to the reader. Para 3: CTA with specific action. Conversational — like a text from a friend who knows the store.",
+    "cta": "Action verb + object. Max 4 words. (e.g. 'Shop Before They're Gone')",
     "estimated_audience": 340,
     "estimated_open_rate": "28%"
   },
   "instagram": {
-    "caption": "engaging caption, max 150 chars",
-    "hashtags": "#tag1 #tag2 #tag3",
-    "hook": "first 5 words that stop the scroll",
+    "caption": "Open with the hook. Name the product. Max 150 chars. End with a soft CTA.",
+    "hashtags": "#tag1 #tag2 #tag3 (3-5 relevant tags, no generic #shop or #sale)",
+    "hook": "First 5 words only — must stop a scroll. Use a number or a bold claim.",
     "best_time": "Today 6pm"
   },
   "tiktok": {
-    "hook": "bold opening line, max 8 words",
-    "script": "2-3 sentence video script, fast-paced and visual",
-    "hashtags": "#tag1 #tag2 #tag3",
+    "hook": "Bold first line max 8 words — question, number, or controversy. Grabs in 1 second.",
+    "script": "2-3 fast sentences. Visual and kinetic — describe what you'd see on screen. Ends with CTA.",
+    "hashtags": "#tag1 #tag2 #tag3 (3-5 relevant tags)",
     "best_time": "Today 7pm"
   }
 }
 
 Rules:
-- Voice: warm, direct, human — never corporate or salesy
-- Never use "blast", "newsletter", "synergy"
+- Every field must name the specific product — no generic copy
+- Voice: warm, direct, human — like a trusted advisor, not a brand account
+- Never use "blast", "newsletter", "synergy", "game-changer"
 - Never say "based on your data"
 - Output only valid JSON`,
 
@@ -1466,16 +1471,28 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
       const win = data.win || {};
       const opp = data.opportunity || {};
       card.innerHTML = `
-        <div class="n-card-hd">${badge}</div>
-        <div class="n-card-body">
-          <strong>Win detected:</strong> ${esc(win.insight || '')}
-          <hr class="divider-line">
-          <strong>Growth opportunity:</strong> ${esc(opp.insight || '')}
-          ${opp.upsell_angle ? `<br><span style="font-size:12px;color:var(--muted);font-style:italic;display:block;margin-top:4px">${esc(opp.upsell_angle)}</span>` : ''}
+        <div class="n-card-hd">${badge}
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:auto;letter-spacing:0.06em">CONFIDENCE: ${esc(data.confidence || 'HIGH').toUpperCase()}</span>
         </div>
-        <div class="n-card-meta">
-          <span class="meta-item">Confidence: <b>${esc(data.confidence || 'High')}</b></span>
-          <span class="meta-item">Signals cross-checked: <b>${data.signals_checked || 3}</b></span>
+        <div class="n-card-body">
+          <div style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.07em;color:var(--green);text-transform:uppercase">WIN</span>
+              <span style="font-family:var(--display);font-weight:700;font-size:13px;color:var(--text)">${esc(win.product || '')}</span>
+              ${win.metric ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--surface);border:1px solid var(--border-md);border-radius:6px;padding:2px 8px">${esc(win.metric)}</span>` : ''}
+            </div>
+            <div style="font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.5">${esc(win.insight || '')}</div>
+          </div>
+          <hr class="divider-line">
+          <div style="margin-top:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.07em;color:#EF5F33;text-transform:uppercase">OPP</span>
+              <span style="font-family:var(--display);font-weight:700;font-size:13px;color:var(--text)">${esc(opp.product || '')}</span>
+              ${opp.metric ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--surface);border:1px solid var(--border-md);border-radius:6px;padding:2px 8px">${esc(opp.metric)}</span>` : ''}
+            </div>
+            <div style="font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.5">${esc(opp.insight || '')}</div>
+            ${opp.upsell_angle ? `<div style="font-family:var(--mono);font-size:10px;color:var(--teal);margin-top:5px;padding:4px 8px;background:rgba(0,124,137,0.06);border-radius:6px;border-left:2px solid var(--teal)">Bundle angle: ${esc(opp.upsell_angle)}</div>` : ''}
+          </div>
         </div>`;
     } else if (agentKey === 'STRATEGY') {
       const actions = data.actions || [];
@@ -1483,12 +1500,14 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
         <div class="n-card-hd">${badge}</div>
         <div class="n-card-body">
           ${actions.map((a, i) => `
-            <div ${i < actions.length - 1 ? 'style="margin-bottom:12px"' : ''}>
-              <strong>${a.type === 'email' ? '✉ Email Campaign' : '📸 Social Post'}</strong>
-              ${a.urgency === 'high' ? `<span style="font-size:10px;font-family:var(--mono);color:#EF4444;margin-left:6px;letter-spacing:0.04em">URGENT</span>` : ''}
-              <br>
-              <span style="font-size:13px;color:var(--muted)">${esc(a.rationale || '')}</span>
-              ${a.external_trend ? `<br><span style="font-size:11px;color:var(--muted);font-style:italic">Trend signal: ${esc(a.external_trend)}</span>` : ''}
+            <div ${i < actions.length - 1 ? 'style="margin-bottom:14px"' : ''}>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
+                <span style="font-family:var(--display);font-weight:700;font-size:12px;color:var(--text)">${a.type === 'email' ? 'Email Campaign' : 'Social Post'}</span>
+                ${a.urgency === 'high' ? `<span style="font-family:var(--mono);font-size:9px;font-weight:600;color:#EF4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:4px;padding:1px 6px;letter-spacing:0.06em">URGENT</span>` : ''}
+                ${a.trigger ? `<span style="font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surface);border:1px solid var(--border-md);border-radius:4px;padding:2px 7px">${esc(a.trigger)}</span>` : ''}
+              </div>
+              <div style="font-family:var(--sans);font-size:13px;color:var(--text);line-height:1.45;font-weight:500">${esc(a.rationale || '')}</div>
+              ${a.external_trend ? `<div style="font-family:var(--mono);font-size:10px;color:var(--teal);margin-top:5px;padding:3px 8px;background:rgba(0,124,137,0.06);border-radius:5px;border-left:2px solid var(--teal)">Trend: ${esc(a.external_trend)}</div>` : ''}
             </div>
             ${i < actions.length - 1 ? '<hr class="divider-line">' : ''}
           `).join('')}
