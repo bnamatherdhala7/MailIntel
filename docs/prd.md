@@ -55,21 +55,115 @@ MailIntel delivers the same capability for **$0.04**.
 - The bottleneck has shifted from "can I build a store" to "can I market it intelligently"
 - Multi-channel complexity is increasing: Instagram Reels, TikTok Shop, email, SMS — merchants need cross-channel strategy, not single-channel tools
 
-### 2.2 The Incumbent Gap
+### 2.2 The Competitive Landscape
 
-| Capability | Shopify Analytics | Klaviyo | ChatGPT / Claude.ai | Agency Retainer | **MailIntel** |
-|---|---|---|---|---|---|
-| Reads your store data | ✓ | Partial | ✗ | ✓ | ✓ |
-| Identifies what to act on | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Explains the why | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Writes campaign copy | ✗ | Templates only | ✓ (generic) | ✓ | ✓ (signal-grounded) |
-| Cross-channel (Email+Social) | ✗ | Email only | ✗ | ✓ | ✓ |
-| Time to action | — | Days | Minutes (with prompting) | 48 hours | **90 seconds** |
-| Cost | Included | $20–$700/mo | $20/mo | $3K–10K/mo | **$0.04/run** |
+The market breaks into four categories of tool. Each solves a piece of the problem. None connects all the pieces.
 
-The key insight: existing AI tools write copy on demand, but they lack the **strategic reasoning** to know *what to write and why*. The gap is not copy quality — it's copy *causality*. MailIntel's campaigns are generated because a specific signal triggered them, and that signal is baked into the copy.
+| Capability | Klaviyo | Omnisend | Triple Whale | Shopify Magic | Jasper / Copy.ai | ChatGPT / Claude.ai | Agency Retainer | **MailIntel** |
+|---|---|---|---|---|---|---|---|---|
+| Reads live Shopify signals | Partial | Partial | ✓ | Limited | ✗ | ✗ | ✓ | **✓** |
+| Detects what to act on | ✗ | ✗ | ✓ (Q&A only) | ✗ | ✗ | ✗ | ✓ | **✓ (automatic)** |
+| Explains the strategic why | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | **✓** |
+| Writes copy grounded in signals | ✗ | ✗ | ✗ | ✗ | ✓ (generic) | ✓ (generic) | ✓ | **✓ (signal-grounded)** |
+| Email + Instagram + TikTok in one run | ✗ | ✗ | ✗ | ✗ | Manual per channel | Manual per channel | ✓ | **✓** |
+| Live market trend awareness | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Sometimes | **✓ (Brave Search)** |
+| Quality gate before copy reaches user | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ (human) | **✓ (Critic agent)** |
+| Zero prompt engineering required | ✗ | ✗ | Partial | ✓ | ✗ | ✗ | ✓ | **✓** |
+| Time to launchable campaign | Days | Days | N/A | N/A | 10–30 min | 5–15 min | 48 hours | **90 seconds** |
+| Cost | $20–$700/mo | $15–$300/mo | $50–$300/mo | Included | $39–$125/mo | $20/mo | $3K–10K/mo | **$0.04/run** |
 
-### 2.3 The Timing Unlock
+The critical gap: every tool to the left is either **data-only** (reads signals, doesn't act) or **copy-only** (writes words, doesn't know why). The gap between insight and action has never had a product in it — until now.
+
+---
+
+### 2.3 Competitor Profiles
+
+#### Klaviyo — The Dominant Email Platform
+
+Klaviyo is the default email and SMS tool for serious Shopify merchants. Its deep Shopify integration, advanced segmentation engine, and automation flows make it genuinely powerful for execution. It knows who your customers are, when they last bought, and what they responded to.
+
+**Where it stops:** Klaviyo assumes you already know what to send. It provides no signal detection, no strategic reasoning, and no cross-channel copy generation. A merchant still needs to notice that Canvas Totes are trending up and stock is low, decide that warrants an urgency email, write the copy, and set up the flow. Klaviyo delivers the email; it does nothing to decide that the email should exist. Its "AI" features as of 2025 are limited to subject line A/B testing — there is no generative copy, no multi-agent reasoning, and no market trend awareness.
+
+**Pricing:** $20–$700/month based on contact list size. Cost scales with your audience, not your output quality.
+
+**Relationship to MailIntel:** Complementary at v2 (MailIntel generates the strategy and copy; Klaviyo executes the send). Competitive at the insight layer — merchants who rely heavily on Klaviyo flows believe they have solved the automation problem. They haven't solved the discovery problem.
+
+---
+
+#### Triple Whale (Moby AI) — The Analytics Intelligence Layer
+
+Triple Whale is an analytics and attribution platform built specifically for Shopify. Its Moby AI layer lets merchants ask natural-language questions about their store performance — "What drove revenue last week?" "Which products are underperforming?" — and get structured, data-backed answers. For merchants who find Shopify Analytics insufficient and GA4 overwhelming, it's a meaningful step forward.
+
+**Where it stops:** Triple Whale identifies what happened and why. It does not tell you what to do about it, and it cannot act. Moby will tell you that Canvas Totes have the highest velocity this week — it will not write the urgency email, draft the Instagram caption, or produce the TikTok hook. The gap between its output (insight) and a launched campaign is identical to the gap before it existed.
+
+**Pricing:** ~$50–$300/month depending on plan tier and store volume.
+
+**Relationship to MailIntel:** MailIntel lives in the space between Triple Whale's insight and Klaviyo's execution. If Triple Whale is the "what happened", MailIntel is the "what to do now." They are theoretically stackable, but MailIntel makes Triple Whale redundant for SMBs who just need actionable weekly intelligence, not deep attribution modelling.
+
+---
+
+#### Shopify Magic — The Platform-Native Risk
+
+Shopify Magic is Shopify's built-in AI layer, embedded throughout the admin experience. It generates product descriptions, rewrites email draft text, and creates variant images. Its tight integration — no setup, no API key, no workflow — gives it a distribution advantage no third-party tool can match.
+
+**Where it stops:** Shopify Magic is task-level, not system-level. It helps you write a product description when you're on the product page. It doesn't know that the product in question is trending up 34% while stock is critically low, that lapsed customers bought it six months ago, and that market trends are pointing toward eco-canvas products this spring. It has no cross-signal reasoning, no strategy layer, and no multi-channel output. Each AI interaction is isolated — there is no memory, no pipeline, no Critic gate.
+
+**Pricing:** Included with Shopify plan (no additional charge).
+
+**Relationship to MailIntel:** The platform risk. Shopify could, in theory, build what MailIntel does — it has the data, the distribution, and the budget. The counter-argument: Shopify's AI roadmap is product-management tooling (descriptions, images, admin summaries), not marketing intelligence. And the five-agent sequential reasoning pipeline is a non-trivial engineering investment that sits outside Shopify's core commerce competency. The window exists.
+
+---
+
+#### Jasper / Copy.ai — The AI Copywriting Tools
+
+Jasper and Copy.ai are general-purpose AI writing platforms with templates and brand voice training for marketing teams. They produce high-quality copy across email, social, ad creative, and long-form content. For teams that know what they want to write, they significantly reduce production time.
+
+**Where they stop:** Both require the human to provide the strategy. You must tell Jasper that Canvas Totes are trending before it can help you write about them. There is no Shopify integration, no signal detection, no Strategist reasoning about which signal warrants action. The blank page problem — the strategic blank page that precedes the copywriting blank page — is left entirely to the user. Additionally, running Email + Instagram + TikTok copy through these tools means three separate prompt sessions with three separate quality checks.
+
+**Pricing:** Jasper: $39–$125/month. Copy.ai: $49–$499/month depending on team size.
+
+**Relationship to MailIntel:** MailIntel is what these tools would be if they could read your store. The copy quality is comparable; the fundamental difference is that MailIntel's copy is causally connected to a specific signal — and that signal is surfaced automatically, not provided by the user.
+
+---
+
+#### Omnisend — The Ecommerce Automation Platform
+
+Omnisend sits between entry-level email tools and the complexity of Klaviyo. It supports email, SMS, push notifications, and WhatsApp through workflow automation and pre-built templates designed specifically for ecommerce events: abandoned cart, welcome series, post-purchase follow-up. Its Shopify integration is solid, and its pricing is accessible for early-stage merchants.
+
+**Where it stops:** Omnisend's automation is entirely rules-based. It fires when a defined trigger occurs — cart abandoned, product viewed, purchase completed. It has no model for discovering opportunistic campaigns: "Canvas Totes are trending up, stock is low, and lapsed customers who bought eco products 6 months ago haven't been messaged — launch an urgency campaign." No rule can be written for that because the merchant doesn't know the pattern exists. Omnisend's limited AI features (subject line suggestions, basic copy assist as of 2025) are additive, not transformative.
+
+**Pricing:** Free tier up to 500 contacts; $15–$300+/month depending on list size and SMS volume.
+
+**Relationship to MailIntel:** Omnisend and MailIntel serve the same merchant size but solve different problems. Omnisend handles always-on triggered flows. MailIntel handles opportunistic signal-driven campaigns. A mature merchant uses both — Omnisend for automation, MailIntel for intelligence.
+
+---
+
+### 2.4 The Positioning Argument
+
+The gap in this market is not a missing feature — it's a missing **layer**. Every tool above operates in one of three zones:
+
+```
+ZONE 1 — DATA         ZONE 2 — STRATEGY       ZONE 3 — EXECUTION
+─────────────────     ───────────────────      ─────────────────────
+Shopify Analytics     [ EMPTY ]                Klaviyo
+Triple Whale                                   Omnisend
+Shopify Magic                                  Jasper / Copy.ai
+(partial insight)                              ChatGPT / Claude.ai
+```
+
+**MailIntel occupies Zone 2 and bridges into both Zone 1 and Zone 3.** It reads the data, reasons about what it means, and produces execution-ready output — in a single 90-second loop.
+
+The incumbents cannot easily move into Zone 2:
+- **Klaviyo and Omnisend** would need to build a reasoning layer on top of their execution infrastructure — a non-trivial investment with unclear monetisation inside a subscription pricing model
+- **Triple Whale** would need to build an execution layer, which requires direct integrations with email providers and social APIs they currently have no incentive to build
+- **Shopify Magic** is constrained by Shopify's roadmap prioritisation and its task-level product philosophy
+- **Jasper / Copy.ai** would need commerce data integrations that are outside their horizontal product scope
+
+The window to own Zone 2 is open.
+
+---
+
+### 2.5 The Timing Unlock
 
 Three shifts in 2025–2026 made this viable:
 
@@ -346,6 +440,23 @@ Every log line is colour-coded by agent. `→` shows what was sent. `←` shows 
 
 **Willingness to pay:** $299–$999/month (multi-store access)
 
+### 4.3 Pain Hierarchy — Why We Built in This Order
+
+The three problems in Section 1 are not equally acute. A PM who treats them as equal builds the wrong thing first.
+
+| Pain | Who feels it most | Frequency | Severity | v1 priority |
+|---|---|---|---|---|
+| **Synthesis paralysis** — too many dashboards, no one tells you what matters | Solo founders, 1–5 person teams | Weekly | High — decisions get delayed or skipped entirely | **P0** |
+| **The blank page** — no idea what to write when they do decide to act | All merchants | Every campaign | Medium — workarounds exist (ChatGPT, templates) | **P0** |
+| **The McKinsey gap** — no strategist to connect signals to opportunities | Growing merchants, $100K+ revenue | Monthly | High — wrong campaigns launched, real opportunities missed | **P0** |
+
+**Why all three are P0:** They compound. A tool that identifies signals but can't write copy leaves the merchant at the blank page. A tool that writes copy without reading signals produces generic campaigns that underperform. The value is entirely in the complete loop — synthesis → strategy → execution — and the loop breaks if any piece is missing. This is why v1 ships all five agents together, not as a phased rollout.
+
+**What we deliberately deprioritised:**
+- Real-time push notifications ("alert me when stock drops below 10 units") — high value, but requires webhooks, persistent backend, and session state. Would have doubled scope without improving the core 90-second loop. Moved to v3.
+- Mobile layout — the primary use case is weekly desktop review sessions. Mobile is a v2 consideration after the desktop loop is validated.
+- Multi-store management — an agency feature that requires per-store context isolation. Delivering it in v1 would have delayed the core product for a minority user segment.
+
 ---
 
 ## 5. Functional Requirements
@@ -430,17 +541,156 @@ Agents are mode-agnostic — they receive identical JSON regardless of source.
 
 ## 7. Success Metrics
 
-| Metric | Target | Current (v1 demo) |
-|---|---|---|
-| Time to insight | 70% reduction (5 hrs/week → ~5 min) | ~90 seconds |
-| Insight-to-campaign latency | < 60 seconds | ~90 seconds (API-dependent) |
-| Cost per full run | < $0.05 | ~$0.04 |
-| Critic approval rate | > 80% on first pass | ~90% in testing |
-| Campaign launch rate | > 50% of surfaced cards | Not yet measured |
+### 7.1 North Star Metric
+
+**Incremental Revenue per User (ARPU)**
+
+> Our goal is to prove that a MailIntel user generates 15–20% more revenue than a standard user by identifying "hidden" opportunities — like $15,000 in open draft orders — and acting on them within 90 seconds.
+
+This is the single metric that transforms MailIntel from a productivity feature into a profit-centre argument for leadership.
 
 ---
 
-## 8. Hard Constraints (Non-Negotiable)
+### 7.2 Feature-Level KPIs — Engine Performance
+
+These metrics prove the multi-agent system is working efficiently.
+
+| KPI | Definition | Target | Current (v1) |
+|---|---|---|---|
+| **Time-to-Activation (TTA)** | Time from business signal detection to "Ready-to-Send" campaign card | < 2 minutes | ~90 seconds |
+| **Agent Success Rate (ASR)** | % of runs where the Critic approves copy on the first pass | > 80% | ~90% in testing |
+| **Inference Efficiency (Cost/Action)** | Average Anthropic API cost per generated campaign | < $0.05 | ~$0.022 |
+| **Insight-to-campaign latency** | Time from query submission to campaign card render | < 60 seconds | ~90 seconds (API-dependent) |
+| **Campaign launch rate** | % of surfaced cards that the user approves and schedules | > 50% | Not yet measured |
+
+**Diagnostic value:** If ASR drops, it signals that the Activation agent's system prompts need tuning — not that the system is broken. Tracking it separately from TTA isolates where the quality regression is.
+
+---
+
+### 7.3 Strategic Business KPIs — Revenue Impact
+
+These metrics prove MailIntel drives the core business and matter to leadership.
+
+| KPI | Definition | Why It Matters |
+|---|---|---|
+| **GMV Contribution** | Actual dollar value of sales generated through MailIntel-suggested campaigns | Transforms MailIntel from an "expense" line to a measurable profit centre — the key argument for premium pricing |
+| **Feature-Led Retention (Stickiness)** | Churn rate of users who have activated MailIntel vs. those who haven't | Users who rely on AI to surface revenue opportunities are significantly harder to churn — this is the defensibility moat |
+| **Campaign Frequency Lift** | Increase in quality campaigns sent per month per user | Many SMBs send 1 email/month due to lack of strategy. MailIntel targets 4+ context-aware sends — each grounded in a live signal |
+
+---
+
+### 7.4 Legacy vs. Agentic — KPI Comparison
+
+| Metric | Traditional Automation | MailIntel (Agentic) |
+|---|---|---|
+| User effort | High — setting up logic gates, segments, templates | Low — reviewing and approving AI-generated campaigns |
+| Optimisation loop | Manual A/B testing (days to significance) | Self-optimising via Critic agent (pre-publish revision) |
+| Insight type | Descriptive — *what happened* | Prescriptive — *what to do now* |
+| Primary success goal | Open rates, click rates | Revenue recovery (GMV) |
+| Signal → action latency | 7 days (average SMB) | 90 seconds |
+
+---
+
+### 7.5 Counter-Metric (Negative Signal)
+
+**Campaign Fatigue:** Monitor whether increased AI-generated send frequency causes an increase in unsubscribe rates.
+
+**The mitigation:** The Orchestrator agent tracks segment recency — it will not propose an action targeting the same segment within a 48-hour window. This prevents the system from optimising for frequency at the expense of relationship quality.
+
+Surfacing this counter-metric in reporting demonstrates that MailIntel optimises for long-term merchant revenue, not vanity engagement numbers.
+
+---
+
+## 8. Pricing Strategy & Business Model
+
+### 8.1 The Core Trade-Off: Per-Run vs Subscription
+
+The raw API cost per run is ~$0.022. Charging per-run is honest but creates two problems: it makes merchants hesitate before each run ("is this worth it?"), and $0.022 is not a monetisable price point without a margin layer. The right model is **subscription with included runs** — removes hesitation, scales predictably, and creates habit.
+
+### 8.2 Proposed Tier Structure
+
+| Tier | Price | Runs/month | Target user |
+|---|---|---|---|
+| **Starter** | $29/mo | 20 runs | Solo merchants, 1–2 campaigns/week |
+| **Growth** | $49/mo | 50 runs | Active merchants, daily chat + weekly campaigns |
+| **Agency** | $299/mo | Unlimited (5 stores) | Fractional CMOs, Shopify agencies |
+
+**Free tier:** First 3 full runs free, no credit card required. Creates the habit loop before the paywall — merchants experience the value (90-second campaign) before committing.
+
+### 8.3 Unit Economics
+
+| Tier | Price | API cost/user/month | Gross margin |
+|---|---|---|---|
+| Starter (20 runs) | $29 | ~$0.44 | ~98.5% |
+| Growth (50 runs) | $49 | ~$1.10 | ~97.8% |
+| Agency (unlimited, 5 stores avg 30 runs each) | $299 | ~$3.30 | ~98.9% |
+
+The economics are exceptional because the cost driver is API tokens, not human labour. Heavy usage is still profitable.
+
+### 8.4 ARPU Ceiling & Market Sizing
+
+- 2M+ Shopify merchants globally
+- 35% AI tool adoption (2025) → ~700,000 AI-open merchants
+- Conservative 2% MailIntel penetration at scale → 14,000 paying users
+- Blended ARPU at $45/month → **$630K ARR** at 2% penetration
+- Agency tier upside: 500 agencies at $299/month → **$1.8M ARR incremental**
+
+The more defensible business model argument: MailIntel is not priced as a tool — it's priced as a percentage of the revenue it helps recover. A single $4,000 draft order converted pays for 137 months of the Growth plan. The ROI argument sells itself.
+
+### 8.5 What We Don't Do
+
+- No per-seat pricing — SMBs are single-user; seats add friction without value
+- No usage overage charges — anxiety-inducing and destroys the "just run it" habit
+- No annual-only pricing at launch — removes the low-commitment entry point needed for PLG
+
+---
+
+## 9. Assumptions & Risk Register
+
+Every assumption below is something that must be true for MailIntel to succeed. If any turns out to be wrong, the response is noted.
+
+| # | Assumption | What happens if it's wrong | Mitigation |
+|---|---|---|---|
+| **A1** | Merchants will trust AI-generated copy enough to launch it | Approval rate stays <20%; product feels like a novelty | Critic transparency (score + reasoning visible), edit-before-launch always available, Intelligence Trace shows the full reasoning chain |
+| **A2** | The 90-second loop creates a weekly habit | Merchants run once, don't return; churn after free trial | Chat interface creates daily touchpoints (store Q&A at ~$0.00015/answer) even when campaigns aren't needed — builds habit independent of campaign generation |
+| **A3** | Shopify API access is stable and sufficient for signal extraction | API terms change, rate limits tighten, or Shopify acquires a direct competitor | Read-only scopes minimise risk; MCP architecture makes data sources swappable; Shopify has structural incentive to support partner ecosystem |
+| **A4** | Claude's output quality and pricing remain viable at $0.04/run | Model price increase >3× breaks the cost thesis | Multi-model routing already in place (Haiku for routing/critique, Sonnet for strategy/copy); architecture is model-agnostic — could swap providers |
+| **A5** | SMBs will pay $29–$49/month for AI marketing intelligence | Price sensitivity kills conversion; merchants stay on free tier | Comparable to Canva Pro ($13/mo) and Jasper ($39/mo), which SMBs already pay; value framing is revenue recovered, not cost incurred — one converted $500 order pays for a year |
+| **A6** | Critic agent quality gate is calibrated correctly | Critic too lenient → bad copy reaches users and erodes trust; Critic too strict → good copy gets revised and loop takes longer | Current ~90% first-pass approval rate needs ground truth comparison; plan to A/B test Critic strictness across cohorts in v2 |
+| **A7** | Brave Search trend data materially improves campaign quality | Trend bullets are generic or irrelevant; adds latency without quality lift | Compressed to ~200 tokens before agent use; Strategist + Activation both evaluate relevance; feature is toggleable if latency-to-quality ratio is poor |
+
+**Kill risks** — scenarios that would require fundamental strategy rethinking:
+
+| Risk | Likelihood | Response |
+|---|---|---|
+| Anthropic raises API pricing by >5× | Low (2026 timeline) | Evaluate fine-tuned open-source model; cost thesis still works at 3× increase |
+| Shopify builds this natively (Shopify Magic v3) | Medium (12–24 month horizon) | Accelerate v2 Klaviyo integration; moat shifts from data access to cross-channel execution quality |
+| SMB AI fatigue — merchants distrust AI-generated marketing | Low-Medium | Lean harder into transparency (Trace panel) and human-in-the-loop gates; never auto-launch |
+
+---
+
+## 10. Open Questions
+
+These are the genuine unknowns that would change product decisions if answered differently. They are not open because we haven't thought about them — they are open because we need data.
+
+**Q1 — Proactive vs. On-demand**
+The current experience is pull-based: merchant asks, agents run. The highest-value version might be push: MailIntel detects a signal (stock dropping, lapsed segment growing) and proactively surfaces it on Monday morning. But unsolicited AI output could feel intrusive. Does proactive delivery increase launch rates or increase unsubscribes? We don't know yet.
+
+**Q2 — Critic calibration**
+The Critic approves ~90% of first-pass copies. Is this a sign that the Activation agent is excellent, or that the Critic is too lenient? We don't have ground truth data — no human reviewer has scored the same outputs for comparison. The right calibration requires a blind human review study in v2.
+
+**Q3 — The data flywheel**
+If MailIntel runs across 10,000 stores, the aggregate signal data (anonymised) becomes valuable: which categories are trending, which SMB sectors are underperforming, what campaigns convert in which seasons. Is there a B2B data licensing play? Or does even hinting at aggregate data use destroy the individual merchant trust that makes the product work?
+
+**Q4 — Agency tier design**
+Agencies managing 20 stores need per-store brand voice, per-client campaign history, and separate reporting views. None of this exists in v1. The question is not whether to build it — it's at what store count the current single-store architecture breaks down, and what the minimum viable agency feature set looks like without derailing the core SMB roadmap.
+
+**Q5 — The right query UX**
+The current input is deliberately freeform — one question, no configuration. As merchants become more sophisticated, they may want to constrain the agents: "focus only on lapsed customers this week, ignore inventory." But adding configuration options risks undermining the core promise of zero cognitive load. Where is the line between useful control and UX complexity that kills adoption?
+
+---
+
+## 11. Hard Constraints (Non-Negotiable)
 
 These are product constraints enforced at the prompt, UI, and code level:
 
@@ -456,7 +706,30 @@ These are product constraints enforced at the prompt, UI, and code level:
 
 ---
 
-## 9. Roadmap
+## 12. Roadmap
+
+### Prioritisation Rationale — Why This Order
+
+The sequencing of v1 → v1.1 → v2 → v3 reflects three principles:
+
+1. **Validate the loop before building the pipes.** The five-agent reasoning chain is the core IP. Proving it works with mock data costs $0 and takes one afternoon. Building live Shopify integration before the loop was validated would have been premature investment in infrastructure.
+
+2. **Add live data only after the experience is right.** v1.1 adds live Shopify + chat because the v1 demo proved the loop. But live data only matters if the experience it powers is compelling — so the experience came first.
+
+3. **Send-side integrations (Klaviyo, Meta) are v2, not v1.** A product that generates brilliant copy but can't actually send it is still a complete demo. A product that sends mediocre copy is a liability. Quality of output must be validated before connecting to real send infrastructure.
+
+**What got cut from v1 and why:**
+
+| Cut feature | Why cut | When it returns |
+|---|---|---|
+| Real email sending via Klaviyo | Risk: bad AI copy going to real customers before Critic is calibrated | v2, after Critic accuracy is validated |
+| Real-time inventory webhooks | Requires persistent backend service — doubles infrastructure scope | v3 |
+| User accounts + session persistence | No auth needed for a demo; premature investment in identity infrastructure | v2 |
+| Mobile layout | Desktop-first use case (weekly review session); mobile adds design complexity without changing the core loop | v2 |
+| Multi-store support | Requires per-store context isolation and a fundamentally different data model | v3 (Agency) |
+| TikTok for Business API | API access is restricted and application-gated; not worth the dependency at demo stage | v3 |
+
+---
 
 ### v1 — Demo-Complete
 - Mock Shopify data with all 5 agents
@@ -472,7 +745,7 @@ These are product constraints enforced at the prompt, UI, and code level:
 - **Live Shopify integration** — real orders, products, customers via Admin REST API `2026-01`
 - **CORS proxy** — `dev-server.js` `/shopify-proxy` endpoint forwards Shopify API calls server-side
 - **MCP server** — `shopify-mcp.js` stdio MCP server with 6 tools, registered in `.mcp.json`
-- **Token optimization** — fields filtering, `get_sales_summary`, compressed agent context, model routing → 74% cost reduction
+- **Token optimisation** — fields filtering, `get_sales_summary`, compressed agent context, model routing → 74% cost reduction
 - **Store data caching** — single fetch per session, reused across chat and agent calls
 - **Live metrics bar + header chips** — revenue, orders, products, low-stock count populated from Shopify
 - **Seed script** — `seed-shopify.js` populates a Shopify store with 8 products, 12 customers, 13 orders
@@ -489,13 +762,12 @@ These are product constraints enforced at the prompt, UI, and code level:
 ### v3 — Growth
 - TikTok for Business API integration
 - Webhook-triggered intelligence: "alert me when inventory drops below threshold"
-- Competitor trend awareness via web search tool
 - White-label for agencies (multi-store dashboard, client management)
 - Canva MCP integration for live creative asset awareness
 
 ---
 
-## 10. Out of Scope (v1)
+## 13. Out of Scope (v1)
 
 - Real email sending (mock success animation only)
 - Real Instagram or TikTok posting
