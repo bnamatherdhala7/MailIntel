@@ -359,6 +359,57 @@
     #feed-inner::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
     #cards-feed { display: flex; flex-direction: column; gap: 12px; }
 
+    /* ── CAMPAIGN SECTION DIVIDER ─────────────────────────────────── */
+    #campaigns-divider {
+      display: none; align-items: center; gap: 10px;
+      padding: 20px 0 6px; flex-shrink: 0;
+    }
+    #campaigns-divider.visible { display: flex; }
+    .cdiv-line { flex: 1; height: 1px; background: var(--border-md); }
+    .cdiv-label {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted); white-space: nowrap;
+    }
+    .cdiv-count {
+      background: var(--brand); color: var(--brand-dark);
+      font-family: var(--mono); font-size: 9px; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em;
+    }
+    #campaign-feed { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── CAMPAIGNS READY BANNER ────────────────────────────────────── */
+    #campaigns-banner {
+      display: none; align-items: center; justify-content: space-between;
+      background: var(--brand); color: var(--brand-dark);
+      padding: 11px 20px; cursor: pointer; flex-shrink: 0;
+      border-top: 2px solid rgba(0,0,0,0.10);
+      transition: opacity 0.15s;
+    }
+    #campaigns-banner.visible {
+      display: flex;
+      animation: bannerIn 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    #campaigns-banner:hover { opacity: 0.88; }
+    #campaigns-banner:active { opacity: 0.75; }
+    .cb-left { display: flex; align-items: center; gap: 10px; }
+    .cb-title { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: -0.01em; }
+    .cb-sub { font-family: var(--mono); font-size: 10px; opacity: 0.6; letter-spacing: 0.04em; }
+    .cb-arrow {
+      font-family: var(--mono); font-size: 16px; font-weight: 700;
+      animation: arrowBounce 1.6s ease-in-out infinite;
+    }
+    @keyframes bannerIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes arrowBounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(4px); } }
+
+    /* ── NAV ICON — HAS CAMPAIGNS STATE ───────────────────────────── */
+    .nav-icon.has-campaigns { color: var(--brand) !important; background: rgba(255,224,27,0.12); }
+    .nav-icon.has-campaigns::before {
+      content: ''; position: absolute; top: 4px; right: 4px;
+      width: 6px; height: 6px; background: var(--brand); border-radius: 50%;
+      box-shadow: 0 0 7px rgba(255,224,27,0.9);
+    }
+
     /* ── NARRATIVE CARDS ─────────────────────────────────────────── */
     .n-card {
       background: var(--card); border-radius: var(--r-lg);
@@ -852,7 +903,7 @@
     <!-- Left Nav -->
     <div id="left-nav">
       <div class="nav-icon active" data-tip="Dashboard">🏠</div>
-      <div class="nav-icon" data-tip="Campaigns" onclick="document.getElementById('cards-feed').scrollIntoView({behavior:'smooth'})">⚡</div>
+      <div class="nav-icon" id="nav-campaigns" data-tip="Campaigns" onclick="scrollToCampaigns()">⚡</div>
       <div class="nav-sep"></div>
       <div class="nav-icon" data-tip="Toggle Trace" onclick="document.getElementById('trace-panel').classList.toggle('collapsed')">🔬</div>
     </div>
@@ -902,12 +953,32 @@
         </div>
         <!-- Messages appear here -->
         <div id="chat-messages"></div>
-        <!-- Campaign cards -->
+        <!-- Narrative cards (Analyst / Strategist) -->
         <div id="cards-feed" style="display:none; flex-direction:column; gap:12px;"></div>
+        <!-- Campaign section divider — appears when first campaign card renders -->
+        <div id="campaigns-divider">
+          <div class="cdiv-line"></div>
+          <div class="cdiv-label">
+            Campaign Results
+            <span class="cdiv-count" id="campaigns-count">0</span>
+          </div>
+          <div class="cdiv-line"></div>
+        </div>
+        <!-- Campaign action cards (from Activation + Critic) -->
+        <div id="campaign-feed"></div>
       </div>
 
       <!-- Agent Stepper -->
       <div id="stepper"></div>
+
+      <!-- Campaigns Ready Banner — appears above input when campaigns are ready -->
+      <div id="campaigns-banner" onclick="scrollToCampaigns()">
+        <div class="cb-left">
+          <span class="cb-title" id="cb-title-text">1 campaign ready</span>
+          <span class="cb-sub">Passed Critic review · scroll to review</span>
+        </div>
+        <span class="cb-arrow">↓</span>
+      </div>
 
       <!-- Chat Input (fixed at bottom) -->
       <div id="command-area">
@@ -1411,6 +1482,14 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     const cf = document.getElementById('cards-feed');
     cf.innerHTML = '';
     cf.style.display = 'none';
+    const campFeed = document.getElementById('campaign-feed');
+    if (campFeed) campFeed.innerHTML = '';
+    const divider = document.getElementById('campaigns-divider');
+    if (divider) divider.classList.remove('visible');
+    const banner = document.getElementById('campaigns-banner');
+    if (banner) banner.classList.remove('visible');
+    const navCamp = document.getElementById('nav-campaigns');
+    if (navCamp) navCamp.classList.remove('has-campaigns');
   }
 
   // Update header insight chips with live store data
@@ -1550,8 +1629,19 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
   function addAction(copyData, action, criticScore, trendData) {
     actionSeq++;
     const id   = `a${actionSeq}`;
-    const feed = document.getElementById('cards-feed');
-    feed.style.display = 'flex';
+    const feed = document.getElementById('campaign-feed');
+
+    // Reveal divider + banner, update count
+    const divider  = document.getElementById('campaigns-divider');
+    const countEl  = document.getElementById('campaigns-count');
+    const banner   = document.getElementById('campaigns-banner');
+    const banTitle = document.getElementById('cb-title-text');
+    const navCamp  = document.getElementById('nav-campaigns');
+    if (divider)  divider.classList.add('visible');
+    if (countEl)  countEl.textContent = actionSeq;
+    if (banTitle) banTitle.textContent = `${actionSeq} campaign${actionSeq > 1 ? 's' : ''} ready`;
+    if (banner)   banner.classList.add('visible');
+    if (navCamp)  navCamp.classList.add('has-campaigns');
 
     // Normalize to multi-platform format
     let cd = copyData;
@@ -1668,7 +1758,15 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
       </div>`;
 
     feed.appendChild(div);
-    setTimeout(() => div.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
+    // First card: scroll to section divider so user sees the header. Subsequent: scroll to the card.
+    if (actionSeq === 1) {
+      setTimeout(() => {
+        const d = document.getElementById('campaigns-divider');
+        if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    } else {
+      setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
   }
 
   function buildEmailPreview(id, e, initials) {
@@ -2051,6 +2149,13 @@ Score >= 7 and no naming violations → approved: true. Output ONLY the JSON.`
     if (!body) return;
     const open = body.classList.toggle('open');
     if (chev) chev.classList.toggle('open', open);
+  }
+
+  function scrollToCampaigns() {
+    const d = document.getElementById('campaigns-divider');
+    if (d && d.classList.contains('visible')) {
+      d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function clearRail() {
