@@ -1292,6 +1292,7 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
   let liveStoreName   = '';   // populated from fetchShopify()
   let cachedStoreData  = null; // cached after first fetch — reused for chat answers
   let _pendingConfirm  = null; // { query, orchData } — avoids JSON-in-HTML escaping issues
+  let _chatHistory     = [];   // rolling log of {role, text} — threaded into Orchestrator on campaign intent
   const _copyStore    = {};
   const _criticScores = {};
   const _trendStore   = {}; // id → raw trend string from Brave Search
@@ -2536,6 +2537,11 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
     bubble.innerHTML = html;
     wrap.appendChild(bubble);
     msgs.appendChild(wrap);
+    // Track plain-text history for Orchestrator context (strip HTML tags)
+    const plain = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+    _chatHistory.push({ role, text: plain });
+    if (_chatHistory.length > 8) _chatHistory.shift(); // keep last 4 turns
+
     // Scroll to bottom
     const feed = document.getElementById('chat-feed');
     requestAnimationFrame(() => { feed.scrollTop = feed.scrollHeight; });
@@ -2563,7 +2569,10 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
   }
 
   function sendCampaignIntent() {
-    document.getElementById('query-input').value = 'Create campaigns for this week';
+    // Carry the last user instruction as context so Orchestrator knows what to focus on
+    const lastUserMsg = [..._chatHistory].reverse().find(m => m.role === 'user' && !isCampaignIntent(m.text));
+    const q = lastUserMsg ? `Create campaigns: ${lastUserMsg.text}` : 'Create campaigns for this week';
+    document.getElementById('query-input').value = q;
     runQuery();
   }
 
@@ -2660,7 +2669,16 @@ Rules:
 
       try {
         stepState('ORCHESTRATOR', 'active');
-        const orchRaw  = await callAgent('ORCHESTRATOR', `Query: "${q}"`);
+        // Build context from recent chat so Orchestrator honours specific user instructions
+        const recentCtx = _chatHistory
+          .filter(m => m.role === 'user' && !isCampaignIntent(m.text))
+          .slice(-3)
+          .map(m => `- ${m.text}`)
+          .join('\n');
+        const orchInput = recentCtx
+          ? `Query: "${q}"\n\nRecent chat context (use to set focus and priority):\n${recentCtx}`
+          : `Query: "${q}"`;
+        const orchRaw  = await callAgent('ORCHESTRATOR', orchInput);
         const orchData = parseJ(orchRaw);
         stepState('ORCHESTRATOR', 'done');
         hideTypingIndicator();
