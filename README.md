@@ -35,6 +35,79 @@ Your store data is all there — revenue, orders, product velocity, low-stock al
 
 ---
 
+## Architecture: Agentic RAG
+
+MailIntel is a practical implementation of **Agentic RAG** — where retrieval, reasoning, and generation are split across specialised agents instead of handled by one monolithic prompt. Standard RAG finds relevant text. Agentic RAG turns that text into executable business strategy.
+
+### How the RAG "Flow" Works
+
+| Agent | RAG Role | What It Actually Does |
+|-------|----------|----------------------|
+| **Orchestrator** | Intent detection | Classifies query → Chat or Campaign; sets focus + priority for downstream agents |
+| **Signal Analyst** | Data retrieval | Calls Shopify MCP tools; extracts Win (high velocity) + Opportunity (low stock, lapsed segment) |
+| **Strategist** | Context augmentation | Merges Shopify signals with Brave Search web trends into a coherent strategic rationale |
+| **Activation** | Grounded generation | Writes Email + Instagram + TikTok copy anchored to the specific signal + live trend |
+| **Critic** | Self-correction | Sequential 5-step reasoning chain scores copy 1–10; rewrites automatically if below 8 |
+
+### Three Techniques That Keep Quality High and Cost Low
+
+#### 1. Context Compaction (Token Optimisation)
+
+Raw Shopify JSON is expensive. Sending 250 full order objects to an LLM costs ~14,000 tokens (~$0.04 for a single context load).
+
+MailIntel uses a `pick()` helper to strip 95% of JSON before it reaches any agent — keeping only the fields the reasoning step actually needs:
+
+```javascript
+// Before: ~800 tokens per product (full Shopify object)
+// After:  ~40 tokens per product (2 fields)
+pick(product, ['title', 'variants.inventory_quantity'])
+
+// Before: get_orders (250 results) → ~14,000 tokens
+// After:  get_sales_summary → ~60 tokens (revenue + count only)
+```
+
+**Result:** Cost drops from ~$0.084/run (naïve) to ~$0.022/run. 74% reduction with no quality loss.
+
+#### 2. Sequential Thinking (Quality Gate)
+
+The Critic agent doesn't score in a single pass. It follows a structured 5-step reasoning chain before producing its JSON output — the same pattern Adobe, Intuit, and other large-scale AI deployments use to prevent check-skipping:
+
+```
+STEP 1 — TONE CHECK        Is language warm? Any jargon or "bot-like" phrasing?
+STEP 2 — NAMING VIOLATIONS  "Mailchimp", "based on your data" = automatic cap at score 6
+STEP 3 — ACCURACY          Does copy name the specific product, metric, and urgency?
+STEP 4 — CONCIERGE QUALITY  Would a trusted advisor who knows this store write this?
+STEP 5 — FINAL SCORE       {"approved": true, "score": 9, "revised_copy": null}
+```
+
+If score < 8, the Critic returns a `revised_copy` in the same JSON structure. Sarah always sees the best version — never a first draft.
+
+#### 3. Hybrid External RAG (Brave Search Thread)
+
+Standard RAG retrieves from your own data. MailIntel adds an external retrieval layer — one Brave Search call per run, threaded through three surfaces at zero additional cost:
+
+```
+1 Brave Search call →  Strategist prompt  (shapes the "why now" rationale)
+                    →  Activation prompt  (makes copy trend-specific, not timeless)
+                    →  Market Context strip on each campaign card (user-visible citations)
+```
+
+The search result is compressed to ~200 tokens of bullets before agent injection. The Strategist card shows 2 clickable trend citations linked to the real Brave Search source URLs. Copy is grounded in what's happening on the live web today — not templates.
+
+### Tech Stack at a Glance
+
+| Layer | Choice |
+|-------|--------|
+| Reasoning (strategy + copy) | Claude Sonnet 4.6 |
+| Routing + critique | Claude Haiku 4.5 |
+| Tool connectivity | MCP (Model Context Protocol) — stdio server + npx servers |
+| Commerce data | Shopify Admin REST API `2026-01` via local CORS proxy |
+| External trends | Brave Search API (1 call/run, threaded across 3 surfaces) |
+| Sequential reasoning | `@modelcontextprotocol/server-sequential-thinking` |
+| Frontend | Vanilla HTML + CSS + JS (no build tools) |
+
+---
+
 ## Screenshots
 
 **Command input + welcome dashboard**

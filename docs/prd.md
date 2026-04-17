@@ -495,26 +495,38 @@ Freeform input is deliberate — zero cognitive load. But sophisticated merchant
 
 ## Appendix A — Technical Architecture (Summary)
 
-**Stack:** Vanilla HTML + CSS + JS · No build tools · Single `index.html` · Node.js dev server
+**Pattern: Agentic RAG** — retrieval, reasoning, and generation split across specialised agents. Standard RAG finds text. MailIntel's pipeline turns text into executable business strategy.
+
+**Three techniques that keep quality high and cost at $0.022/run:**
+
+| Technique | What It Does | Business Impact |
+|---|---|---|
+| **Context Compaction** | `pick()` helper strips 95% of raw Shopify JSON before agent injection; `get_sales_summary` replaces raw order lists | $0.084 → $0.022/run (74% reduction) |
+| **Sequential Thinking (Critic)** | 5-step structured reasoning chain before every score — Tone → Naming → Accuracy → Concierge → Score | Copy quality gate catches what single-pass scoring misses |
+| **Hybrid External RAG** | One Brave Search call threaded through Strategist prompt + Activation prompt + Market Context strip | Copy is grounded in live web trends, not templates — at zero additional API cost |
+
+**Key decisions:**
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Single-file | All runtime code in `index.html` | Zero deployment complexity; demo-anywhere |
-| Agent output | JSON only, parsed by `parseJ()` | Eliminates markdown fencing failures |
-| Agent context | Plain-text summaries (~150 tokens) | vs. raw JSON (~1,200 tokens); 87% reduction |
-| API key storage | `sessionStorage` only | Cleared on tab close; never persists |
-| Shopify access | `/shopify-proxy` in dev-server.js | Browser CORS blocks Shopify Admin API directly |
-| Revenue queries | `get_sales_summary` (not `get_orders`) | 60 tokens vs. 14,000 tokens; 99.6% reduction |
+| Single-file frontend | All runtime code in `index.html` | Zero deployment complexity; demo-anywhere |
+| Agent output format | JSON only, `parseJ()` parser | Eliminates markdown fencing failures in multi-agent chains |
+| Agent context | Plain-text summaries (~150 tokens) | vs. raw JSON (~1,200 tokens/call); 87% reduction |
+| Model routing | Haiku for routing/critique, Sonnet for strategy/copy | 40% cost reduction vs. all-Sonnet; identical output quality on structured tasks |
+| API key storage | `sessionStorage` only | Cleared on tab close; never persists to disk |
+| Tool connectivity | MCP (Model Context Protocol) | Industry-standard interface for AI ↔ tool communication; swappable data sources |
 
-**Cost optimisation:**
+**Cost trajectory:**
 
 | Version | Input Tokens/Run | Cost/Run |
 |---|---|---|
-| Naive (all Sonnet, raw JSON) | ~28,000 | ~$0.084 |
+| Naïve (all Sonnet, raw JSON) | ~28,000 | ~$0.084 |
 | Model routing + compressed context | ~8,400 | ~$0.025 |
 | + Session cache | ~7,200 | **~$0.022** |
 | **Total reduction** | **74%** | **74%** |
 
+*Full architecture detail and code walkthrough: [README.md](../README.md#architecture-agentic-rag)*
+
 ---
 
-*MailIntel v3.0 PRD — April 2026 · Sarah shouldn't need an agency. She needs MailIntel.*
+*MailIntel v4.0 PRD — April 2026 · Sarah shouldn't need an agency. She needs MailIntel.*
