@@ -50,15 +50,44 @@ Sarah is not the target user because she's average. She's the target because she
 
 ### The Compound Failure
 
-Three problems compound, and each one makes the others worse:
+Three problems stack. They're prioritised separately because they have different blast radii.
 
-| Pain | Frequency | Severity | Why It Compounds |
-|---|---|---|---|
-| **Dashboard paralysis** — 5 tools, no unified view of what matters this week | Weekly | High | Without a clear signal, Sarah can't pick a campaign angle |
-| **The blank page** — she knows she needs to write copy, but doesn't know where to start | Every campaign attempt | High | Paralysis at step 1 makes step 2 irrelevant |
-| **The McKinsey gap** — no strategist to connect signals to opportunities | Monthly | Critical | Enterprise brands have a $80K growth marketer for this. Sarah doesn't. |
+---
 
-**All three are P0.** Fix only one and the product breaks. A tool that surfaces signals but can't write copy leaves Sarah at the blank page. A tool that writes copy without reading signals produces generic campaigns that underperform and erode her trust. The value is entirely in the complete loop.
+**P0 — The synthesis gap:** No single view of what to act on this week.
+
+> *"I have Shopify, Klaviyo, Meta Ads, and a spreadsheet. None of them talk to each other. I spend Sunday afternoon trying to figure out what's actually happening in my store and I still don't know what to do on Monday."*
+> — Priya, founder of a $180K/year skincare brand, Austin TX
+
+Merchants wake up to 5 open tabs that share no common language. The Canvas Tote is trending up 34%, 8 units left, reorder window closing — but no tool surfaces this as "act now." The signal is there. The synthesis isn't.
+
+**Frequency:** Weekly. **Who feels it:** Every merchant running more than one channel.
+
+---
+
+**P0 — The blank page:** Knowing what to promote isn't enough without knowing what to say.
+
+> *"I'll decide I need to do an email for the tote bags. Then I open Klaviyo and just stare at it. I've used ChatGPT but I have to explain everything from scratch every time and it still sounds generic."*
+> — Marcus, owner of a $90K/year outdoor gear store, Portland OR
+
+Even when a merchant identifies the right signal, the copy problem is unsolved. Generic AI tools (ChatGPT, Jasper) require the merchant to provide the strategy — they help with the words, not the thinking. The blank page compounds the synthesis gap: two sequential blockers, not one.
+
+**Frequency:** Every campaign attempt. **Who feels it:** All merchants, but worst for solo founders with no marketing background.
+
+---
+
+**P1 — The McKinsey gap:** No one to connect signals to strategic timing and cross-channel angles.
+
+> *"I know I should be doing more with lapsed customers — Klaviyo keeps showing me the segment. But what do I send them? What's the angle? I don't have a strategist to figure that out."*
+> — Jamie, owner of a $340K/year home goods store, Chicago IL
+
+This is felt less frequently than the synthesis gap but has a higher revenue ceiling. The merchant who identifies the right product and writes competent copy still misses: the lapsed-customer angle, the seasonal timing, the bundle opportunity with slow-moving inventory. Enterprise brands employ a growth marketer for this. Sarah doesn't.
+
+**Frequency:** Monthly strategic reviews. **Who feels it:** Merchants at $100K+ revenue who have the basics in place but plateau.
+
+---
+
+**Why P0 and P1, not all P0:** The synthesis gap and blank page are daily and weekly blockers — they prevent any marketing from happening at all. The McKinsey gap is a ceiling problem: merchants can function without it but leave money on the table. v1 solves all three, but the synthesis gap and blank page are the ones that determine whether a merchant ever opens the product a second time.
 
 **Signal → action latency for the average SMB: 7 days. Often infinity.**
 
