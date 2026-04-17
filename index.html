@@ -543,6 +543,7 @@
       transition: opacity 0.15s, background 0.15s;
     }
     .market-bullet-source:hover { opacity: 1; background: rgba(0,124,137,0.08); }
+    .market-bullet-age { font-family: var(--mono); font-size: 9px; color: var(--subtle); display: inline-block; margin-top: 2px; }
     /* ── TREND LIST (Strategist card) ───────────────────────────── */
     .trend-list { margin-top: 7px; display: flex; flex-direction: column; gap: 4px; }
     .trend-row {
@@ -1752,6 +1753,7 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
           <div class="market-bullet-text">
             <span class="market-bullet-title">${esc(s.title)}</span>
             ${s.snippet ? `<span class="market-bullet-snippet">${esc(s.snippet)}</span>` : ''}
+            ${s.age ? `<span class="market-bullet-age">${esc(s.age)}</span>` : ''}
           </div>
           ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="market-bullet-source">${esc(s.domain)} ↗</a>` : ''}
         </div>`).join('');
@@ -2471,7 +2473,8 @@ Score >= 7 and no naming violations → approved: true. Your entire response mus
           title:   r.title || '',
           snippet: (r.description || '').slice(0, 120),
           url:     r.url || '',
-          domain
+          domain,
+          age:     r.page_age || r.age || ''
         };
       });
       // Compressed text for agent prompts — same format, no extra tokens
