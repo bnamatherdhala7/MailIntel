@@ -4,10 +4,6 @@
 
 ---
 
-## Press Release — Working Backwards
-
-*Written as if MailIntel launched today. This is the customer value we are building towards.*
-
 ---
 
 
