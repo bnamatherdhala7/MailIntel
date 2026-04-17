@@ -4,34 +4,6 @@
 
 ---
 
-## Press Release — Working Backwards
-
-*Written as if MailIntel launched today. This is the customer value we are building towards.*
-
----
-
-**FOR IMMEDIATE RELEASE**
-
-### MailIntel Gives Every Small Business Owner a CMO in 90 Seconds
-
-*New AI platform reads your Shopify store, reasons about what to do next, and writes ready-to-launch campaigns — for $0.022 a run*
-
-**San Francisco, April 2026** — MailIntel today announced the launch of the first AI commerce intelligence platform built specifically for small business owners. Using a five-agent reasoning pipeline, MailIntel reads a merchant's live Shopify data, cross-references real-time market trends, and delivers two ready-to-launch campaigns across Email, Instagram, and TikTok — in under 90 seconds.
-
-Before MailIntel, a Shopify merchant who noticed a trending product had to open five separate tools, figure out what to say, write copy from scratch, and manually schedule across platforms — a process that took hours and often never happened at all. MailIntel collapses that entire workflow into a single question.
-
-> *"I knew my Canvas Totes were selling fast but I had no idea what to do about it. MailIntel told me there was a low-stock window, wrote me an urgency email and an Instagram caption, and I launched both in ten minutes. That campaign brought in $3,200 in 48 hours."*
-> — **Sarah Chen**, Owner, Bloom & Thread (Shopify merchant, $220K/year)
-
-Unlike generic AI writing tools that require merchants to provide the strategy, MailIntel reads the store data itself. It detects which product is the current win, which segment is lapsed, what the live market trend is, and generates copy grounded in those specific signals — not templates. A Critic agent quality-gates every output before the merchant sees it, ensuring professional-grade copy on every run.
-
-> *"The gap between analytics and action has cost SMBs billions in unrealised revenue. We built the synthesis layer that closes it — at a price point that makes a virtual CMO accessible to a two-person store."*
-> — **Bharat Namatherdhala**, Founder, MailIntel
-
-MailIntel is available today at $29/month for 20 campaign runs. The first three runs are free.
-
----
-
 ## Executive Summary
 
 **In one sentence:** MailIntel turns a Shopify merchant's raw store data into two ready-to-launch campaigns — across Email, Instagram, and TikTok — in 90 seconds, for $0.022.
