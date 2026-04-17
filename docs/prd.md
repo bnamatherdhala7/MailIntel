@@ -1,6 +1,34 @@
 # MailIntel — Product Requirements Document
 
-**Version:** 3.0 · **Date:** April 2026 · **Status:** MVP Complete · **Author:** Bharat Namatherdhala
+**Version:** 4.0 · **Date:** April 2026 · **Status:** MVP Complete · **Author:** Bharat Namatherdhala
+
+---
+
+## Press Release — Working Backwards
+
+*Written as if MailIntel launched today. This is the customer value we are building towards.*
+
+---
+
+**FOR IMMEDIATE RELEASE**
+
+### MailIntel Gives Every Small Business Owner a CMO in 90 Seconds
+
+*New AI platform reads your Shopify store, reasons about what to do next, and writes ready-to-launch campaigns — for $0.022 a run*
+
+**San Francisco, April 2026** — MailIntel today announced the launch of the first AI commerce intelligence platform built specifically for small business owners. Using a five-agent reasoning pipeline, MailIntel reads a merchant's live Shopify data, cross-references real-time market trends, and delivers two ready-to-launch campaigns across Email, Instagram, and TikTok — in under 90 seconds.
+
+Before MailIntel, a Shopify merchant who noticed a trending product had to open five separate tools, figure out what to say, write copy from scratch, and manually schedule across platforms — a process that took hours and often never happened at all. MailIntel collapses that entire workflow into a single question.
+
+> *"I knew my Canvas Totes were selling fast but I had no idea what to do about it. MailIntel told me there was a low-stock window, wrote me an urgency email and an Instagram caption, and I launched both in ten minutes. That campaign brought in $3,200 in 48 hours."*
+> — **Sarah Chen**, Owner, Bloom & Thread (Shopify merchant, $220K/year)
+
+Unlike generic AI writing tools that require merchants to provide the strategy, MailIntel reads the store data itself. It detects which product is the current win, which segment is lapsed, what the live market trend is, and generates copy grounded in those specific signals — not templates. A Critic agent quality-gates every output before the merchant sees it, ensuring professional-grade copy on every run.
+
+> *"The gap between analytics and action has cost SMBs billions in unrealised revenue. We built the synthesis layer that closes it — at a price point that makes a virtual CMO accessible to a two-person store."*
+> — **Bharat Namatherdhala**, Founder, MailIntel
+
+MailIntel is available today at $29/month for 20 campaign runs. The first three runs are free.
 
 ---
 
@@ -64,7 +92,39 @@ Three problems compound, and each one makes the others worse:
 
 ---
 
-## 3. Why This Solution — Decisions and Alternatives Considered
+## 3. Strategic Rationale — Why AI, and Why Now
+
+### The Problem Requires Reasoning, Not Rules
+
+The insight-to-action gap cannot be closed with rule-based automation. Klaviyo flows fire when a defined trigger matches — `abandoned_cart = true → send email`. No rule can be written for: *"Canvas Totes are trending up 28% YoY, stock is at 8 units, the lapsed eco-accessories segment hasn't been messaged in 30 days, and spring seasonal demand typically peaks in 3 weeks — launch an urgency email."*
+
+That is a *synthesis* task. It requires reading across multiple data sources, applying real-world context, and generating a decision. Only a reasoning system — not a workflow engine — can do it.
+
+**Why AI is necessary:**
+
+| Requirement | Rule-Based Automation | AI Reasoning |
+|---|---|---|
+| Cross-signal synthesis (inventory + segment + trend + timing) | ✗ | ✓ |
+| Copywriting grounded in specific signals | ✗ | ✓ |
+| Quality-gate copy before it reaches a customer | ✗ | ✓ (Critic agent) |
+| Adapts to each merchant's unique store state | ✗ | ✓ |
+| Generates novel campaign angles, not templates | ✗ | ✓ |
+
+### Why Now — Three Unlocks in 2025–2026
+
+AI reasoning systems capable of this synthesis existed conceptually for years. Three shifts made a production product viable:
+
+1. **Claude's structured output reliability** — Multi-agent JSON pipelines were brittle until mid-2025. Agents can now be trusted to output parseable, schema-consistent responses at scale without hallucinating structure. This is the technical foundation the agent loop depends on.
+
+2. **Frontier model cost trajectory** — Claude Haiku 4.5 at $1/$5 per million tokens makes routing and analysis agents cost fractions of a cent. The full 5-agent loop costs ~$0.022. At 2023 pricing, the same loop would have cost ~$1.20 — above any viable SMB subscription model.
+
+3. **Zero-infrastructure deployment** — Anthropic's direct-browser API header and MCP architecture allow a fully functional demo to run without a backend service. This compressed the time from "idea" to "merchant testing live Shopify data" from months (infrastructure build) to days (single HTML file + dev server). Speed of validation changes the product risk profile entirely.
+
+**The window is open because the cost and reliability thresholds crossed simultaneously. Twelve months ago, this was a research project. Today it's a $29/month product.**
+
+---
+
+## 4. Why This Solution — Decisions and Alternatives Considered
 
 Every major architecture decision had real alternatives. Here's how we chose.
 
@@ -168,7 +228,7 @@ Every major architecture decision had real alternatives. Here's how we chose.
 
 ---
 
-## 4. Competitive Positioning
+## 5. Competitive Positioning
 
 The market breaks into three zones. Every incumbent is stuck in one.
 
@@ -196,7 +256,7 @@ Why incumbents can't easily move into Zone 2:
 
 ---
 
-## 5. The 5-Agent Pipeline
+## 6. The 5-Agent Pipeline
 
 ```
 User Query
@@ -228,7 +288,7 @@ CHECK 4 — CONCIERGE    Would a trusted advisor who knows this store write this
 
 ---
 
-## 6. Success Metrics
+## 7. Success Metrics
 
 ### North Star
 > **Incremental revenue per user** — prove that a MailIntel user generates 15–20% more Shopify revenue than a comparable non-user by surfacing and acting on hidden opportunities within 90 seconds.
@@ -255,7 +315,83 @@ Monitor unsubscribe rate lift from increased AI-generated send frequency. v2 mit
 
 ---
 
-## 7. Roadmap — What, Why, and Why Now
+## 8. Cross-Functional Impact
+
+MailIntel is not a standalone feature — it introduces an AI reasoning layer that creates new dependencies, new data surfaces, and new operational requirements across teams.
+
+---
+
+### Platform Engineering
+
+**v1 (current) dependencies — minimal:**
+- Dev server (`dev-server.js`) handles CORS proxying for Shopify and Brave APIs. No persistence, no auth.
+- Single HTML file; no build pipeline, no CDN dependency.
+- API key management: browser `sessionStorage` only — cleared on tab close, never written to disk.
+
+**v2 requirements Platform Engineering must plan for:**
+
+| Requirement | Why | Estimated Complexity |
+|---|---|---|
+| **Anthropic API backend proxy** | Browser-direct API key is demo-only; production requires server-side key management and rate limiting | Medium — new service, auth required |
+| **Shopify OAuth flow** | `dev-server.js` proxy uses a static admin token; production needs per-merchant OAuth with `read_orders`, `read_products`, `read_customers` scopes | Medium — standard OAuth 2.0, Shopify-specific callback flow |
+| **Session persistence layer** | Campaign history, Orchestrator recency window (48h per segment), user preferences | Medium — key-value store per merchant, not relational |
+| **Klaviyo send integration** | POST to Klaviyo API on "Launch" — requires campaign creation, list targeting, and send-time scheduling | Medium — Klaviyo API is well-documented |
+| **Meta Graph API (Instagram scheduling)** | OAuth, page token management, media object creation, publish endpoint | High — token refresh complexity; subject to API policy changes |
+
+**v3 requirements (flag for long-range planning):**
+- Webhook receiver for real-time Shopify inventory events (persistent service, not request/response)
+- Multi-tenant data model for agency tier (per-store context isolation)
+- TikTok for Business API (restricted access; requires application approval)
+
+---
+
+### Data Science
+
+MailIntel generates structured agent outputs at every run — each one is a labelled training signal and a quality measurement opportunity.
+
+**Immediate (v2) — Critic Calibration Study:**
+
+The Critic agent currently approves ~90% of first-pass copies. Whether this reflects excellent Activation output or a lenient Critic is unknown. We have no human baseline.
+
+*Required:* A blind review study where human reviewers score the same copy outputs the Critic sees — without knowing the Critic's score. The correlation between human scores and Critic scores establishes calibration ground truth.
+
+*DS deliverable:* Scoring rubric, reviewer pool design, inter-rater reliability threshold (target: κ > 0.7), and calibration report. This gates v2 Klaviyo integration — we do not send to real customers until the Critic's accuracy is validated.
+
+**Medium-term (v2–v3) — Agent Quality Measurement:**
+
+| Signal | What It Measures | Instrumentation Needed |
+|---|---|---|
+| Critic score distribution per Activation run | Activation prompt quality drift over time | Log score + model version + prompt hash per run |
+| Campaign Launch Rate (cards surfaced → launched) | Whether Sarah trusts the output enough to act | Event: `card_rendered` → `launch_clicked` |
+| A/B variant acceptance rate | Whether the 120-token variant call adds value | Event: `variant_generated` → `variant_used` |
+| Brave Search trend relevance (user signal) | Whether live trends improve copy grounded-ness | Qualitative: user feedback on trend strip; quantitative: launch rate with/without trend data |
+
+**Long-term (v3) — Aggregate Signal Intelligence:**
+
+At 10,000+ stores, anonymised signals become a product in their own right:
+- Which product categories are trending by region and season
+- What campaign angles convert in which merchant segments
+- Which Critic-approved copy structures perform best (requires send + revenue attribution)
+
+*Open question for DS:* Can we build a feedback loop where campaign revenue outcomes (Klaviyo open rate, click rate, revenue attributed) flow back into Activation prompt tuning — without exposing individual merchant data? This is the data flywheel that creates long-term defensibility.
+
+**Privacy constraint:** All aggregate analysis must be anonymised at the store level. No individual merchant's product names, copy, or revenue figures can appear in shared datasets. Legal and privacy review required before any data pipeline is built.
+
+---
+
+### Product — Internal Dependencies
+
+| Dependency | Owned By | Blocks |
+|---|---|---|
+| Critic calibration study | DS | v2 Klaviyo send integration |
+| Anthropic backend proxy | Platform Eng | v2 production launch |
+| Shopify OAuth | Platform Eng | v2 production launch |
+| Session persistence | Platform Eng | Orchestrator recency window (campaign fatigue mitigation) |
+| Agency data model design | Product + Platform Eng | v3 white-label |
+
+---
+
+## 9. Roadmap — What, Why, and Why Now
 
 ### Prioritisation Framework
 
@@ -335,7 +471,7 @@ Three questions govern every scoping decision:
 
 ---
 
-## 8. Risks & Open Questions
+## 10. Risks & Open Questions
 
 ### Risk Register
 
@@ -367,19 +503,7 @@ Freeform input is deliberate — zero cognitive load. But sophisticated merchant
 
 ---
 
-## Appendix A — The 3 Timing Unlocks
-
-Three shifts in 2025–2026 made this viable now, not 18 months ago:
-
-1. **Claude's JSON reliability** — multi-agent JSON pipelines were brittle until mid-2025. Agents can now be trusted to output structured, parseable responses at scale.
-2. **Haiku's cost/speed ratio** — at $1/$5 per million tokens, routing and analysis agents cost fractions of a cent. The 5-agent loop costs ~$0.022 total.
-3. **Direct browser API access** — Anthropic's direct-browser header makes zero-backend demos viable. Sarah can experience the product in 90 seconds from a URL.
-
-**The technology finally matches the problem.**
-
----
-
-## Appendix B — Technical Architecture (Summary)
+## Appendix A — Technical Architecture (Summary)
 
 **Stack:** Vanilla HTML + CSS + JS · No build tools · Single `index.html` · Node.js dev server
 
